@@ -40,8 +40,8 @@ void initIMU(){
 
 void track()
 {
-	curXSpd += SensorValue[acX]*interval*uC;
-	curYSpd += SensorValue[acY]*interval*uC;
+	curXSpd += SensorValue(acX)*interval*uC;
+	curYSpd += SensorValue(acY)*interval*uC;
 	curXPos += curXSpd*interval*uC;
 	curYPos += curYSpd*interval*uC;
 	curHeading = SensorValue[gyro];
@@ -67,99 +67,16 @@ void setArm(float pos)
 	motor[leftLift] = 0;
 	motor[rightLift] = 0;
 }
-void armGoDown(int time)
-{
-	motor[leftLift] = 127;
-	motor[rightLift] = -127;
-	delay(time);
-	motor[leftLift] = 0;
-	motor[rightLift] = 0;
 
-}
-void moveY(int time, int dir)//dir>0 moves forwards
-{
-	dir = sgn(dir);
-	motor[lFront] = dir*127;
-	motor[lBack] =  dir*127;
-	motor[rFront] = dir*-127;
-	motor[rBack] = dir*-127;
-	delay(time);
-	motor[lFront] = 0;
-	motor[lBack] = 0;
-	motor[rFront] = 0;
-	motor[rBack] = 0;
-}
-void moveX(int time, int dir)//dir>0 moves right
-{
-	dir = sgn(dir);
-	motor[lFront] = dir*127;
-	motor[lBack] = dir*-127;
-	motor[rFront] = dir*127;
-	motor[rBack] = dir*-127;
-	delay(time);
-	motor[lFront] = 0;
-	motor[lBack] = 0;
-	motor[rFront] = 0;
-	motor[rBack] = 0;
-}
-void rotate(int time, int dir)//dir>0 moves clockwise
-{
-	dir = sgn(dir);
-	motor[lFront] = dir*127;
-	motor[lBack] = dir*127;
-	motor[rFront] = dir*127;
-	motor[rBack] = dir*127;
-	delay(time);
-	motor[lFront] = 0;
-	motor[lBack] = 0;
-	motor[rFront] = 0;
-	motor[rBack] = 0;
-}
-
-void autoLeft()
-{
-	moveY(500,1);
-	armGoDown(500);
-	//moveY(500,-1);
-	delay(150);
-	setArm(2650);
-	delay(150);
-	moveY(2350,1);
-	delay(150);
-	moveY(500,-1);
-	delay(150);
-	moveX(1000,-1);
-	delay(150);
-	moveY(1300,1);
-	delay(150);
-	moveY(500,-1);
-}
-void autoRight()
-{
-	moveY(500,1);
-	armGoDown(500);
-	//moveY(500,-1);
-	delay(150);
-	setArm(2650);
-	delay(150);
-	moveY(2350,1);
-	delay(150);
-	moveY(500,-1);
-	delay(150);
-	moveX(750,1);
-	delay(150);
-	moveY(1300,1);
-	delay(150);
-	moveY(500,-1);
-}
 void pre_auton()
 {
 	bStopTasksBetweenModes = true;
 	initStartPos();
+	initIMU();
 }
 task autonomous()
 {
-	autoRight();
+
 }
 
 task usercontrol()
