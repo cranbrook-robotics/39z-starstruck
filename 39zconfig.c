@@ -3,7 +3,7 @@
 #pragma config(Sensor, in3,    gyro,           sensorGyro)
 #pragma config(Sensor, in4,    acX,            sensorAccelerometer)
 #pragma config(Sensor, in5,    acY,            sensorAccelerometer)
-#pragma config(Sensor, in6,    acZ,            sensorNone)
+#pragma config(Sensor, dgtl12, initIndicator,  sensorLEDtoVCC)
 #pragma config(Motor,  port1,           rFront,        tmotorVex393_HBridge, openLoop)
 #pragma config(Motor,  port2,           clawY,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port3,           lBack,         tmotorVex393_MC29, openLoop)

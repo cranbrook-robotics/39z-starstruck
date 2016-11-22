@@ -11,8 +11,7 @@ int initX, initY, initH;
 float potValLeft, potValRight;
 int startTile;
 float curXSpd = 0, curYSpd = 0, curXPos, curYPos, curHeading;
-int interval = 75;
-float uC = 39.3701; //1 meter = 39.3701 inches
+float interval = 0.075; //Interval is in SECONDS
 
 tMotor lLiftMotors[] = {lLiftB, lLiftM, lLiftT};
 MotorSet leftLift;
@@ -44,11 +43,29 @@ void initStartPos(){
 	startPos[3][2] = 0;
 }
 
+typedef enum AccAxis { XAxis, YAxis };
+tSensors accPorts[] = {acX, acY};
+float accBias[] = {0, 0};
+
+float getAcc(AccAxis axis)
+{
+	return SensorValue(accPorts[axis])*0.5234 - 1071.7 - accBias[axis];//Conversion from Accelerometer Returns to in/s^2
+}
 void initIMU(){
 	curXSpd = 0;
 	curYSpd = 0;
 	curHeading = initH;
-	SensorValue[gyro] = initH;
+	SensorValue(gyro) = initH;
+	float xC = 0;
+	float yC = 0;
+	for (int i = 0; i < 50; i++)
+	{
+		xC += getAcc(XAxis);
+		yC += getAcc(YAxis);
+		delay(10);
+	}
+	accBias[XAxis] = xC/50;
+	accBias[YAxis] = yC/50;
 }
 
 void setArm(float pos)
@@ -86,12 +103,12 @@ task track()
 {
 	while (true)
 	{
-		curXSpd += SensorValue(acX)*interval*uC*1000; // m/s^2 * s/1000 * unit conversion
-		curYSpd += SensorValue(acY)*interval*uC*1000;
-		curXPos += curXSpd*interval*1000;
-		curYPos += curYSpd*interval*1000;
-		curHeading = SensorValue[gyro];
-		delay (interval);
+		curXSpd += getAcc(XAxis)*interval; // m/s^2 * s/1000 * unit conversion
+		curYSpd += getAcc(YAxis)*interval;
+		curXPos += curXSpd*interval;
+		curYPos += curYSpd*interval;
+		curHeading = SensorValue(gyro);
+		delay (interval/1000);
 	}
 }
 
@@ -103,10 +120,12 @@ void moveTo(float xTar, float yTar, float hTar)
 void pre_auton()
 {
 	bStopTasksBetweenModes = true;
+	SensorValue(initIndicator) = 1;
 	initStartPos();
 	initIMU();
 	MotorSetInit (leftLift, lLiftMotors, 3);
 	MotorSetInit (rightLift, rLiftMotors, 2);
+	SensorValue(initIndicator) = 0;
 }
 
 void redLeft()
@@ -130,12 +149,15 @@ task autonomous()
 {
 	initPos();
 	startTask(track);
+	//redLeft();
+	//redRight();
+	//blueLeft();
+	//blueRight();
 	stopTask(track);
 }
 
 task usercontrol()
 {
-	bool armLock = false;
 	while (true)
 	{
 		potValLeft = SensorValue(potLeft);
@@ -144,11 +166,7 @@ task usercontrol()
 		motor[lBack] =  vexRT[Ch3] - vexRT[Ch4] + vexRT[Ch1];
 		motor[rFront] = -vexRT[Ch3] + vexRT[Ch4] + vexRT[Ch1];
 		motor[rBack] = -vexRT[Ch3] - vexRT[Ch4] + vexRT[Ch1];
-		setPower(leftLift, vexRT[Btn5U] ? -127 : vexRT[Btn5D] ? 127 : armLock ? -20 : 0);
-		setPower(rightLift, vexRT[Btn5U] ? 127 : vexRT[Btn5D] ? -127 : armLock ? 20 : 0);
-		if (vexRT[Btn6D]){
-			armLock = !armLock;
-			delay(500);
-		}
+		setPower(leftLift, vexRT[Btn5U] ? -127 : vexRT[Btn5D] ? 127 : 0);
+		setPower(rightLift, vexRT[Btn5U] ? 127 : vexRT[Btn5D] ? -127 : 0);
 	}
 }
