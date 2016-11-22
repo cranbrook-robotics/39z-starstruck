@@ -1,10 +1,9 @@
-#pragma config(UserModel, "C:/Users/rstudent/code/39z-competition/39zconfig.c") //Cortex Configs
+#pragma config(UserModel, "39zconfig.c") //Cortex Configs
 #pragma platform(VEX)//Platform Type
 #pragma competitionControl(Competition) //This is a Competition Template
 #pragma autonomousDuration(15) //15 second autonomous mode
 #pragma userControlDuration(105) //1:45 driver control mode
 #include "Vex_Competition_Includes.c" //Uses Vex stuff
-#include <CKVexMotorSet.h>
 
 
 int initX, initY, initH;
