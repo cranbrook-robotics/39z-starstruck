@@ -114,7 +114,7 @@ task track()
 
 void moveTo(float xTar, float yTar, float hTar)
 {
-
+	float translationalDirection = atan2(yTar, xTar);
 }
 
 void pre_auton()
