@@ -4,6 +4,7 @@
 #pragma autonomousDuration(15) //15 second autonomous mode
 #pragma userControlDuration(105) //1:45 driver control mode
 #include "Vex_Competition_Includes.c" //Uses Vex stuff
+#include "CKVexMotorSet.h"
 
 
 int initX, initY, initH;
@@ -12,6 +13,13 @@ int startTile;
 float curXSpd = 0, curYSpd = 0, curXPos, curYPos, curHeading;
 int interval = 75;
 float uC = 39.3701; //1 meter = 39.3701 inches
+
+tMotor lLiftMotors[] = {lLiftB, lLiftM, lLiftT};
+MotorSet leftLift;
+
+tMotor rLiftMotors[] = {rLiftB, rLiftY};
+MotorSet rightLift;
+
 
 int startPos[4][3];
 void initStartPos(){
@@ -51,13 +59,13 @@ void setArm(float pos)
 		potValLeft = SensorValue(potLeft);
 		if (potValLeft > pos)
 		{
-			motor[leftLift] = -127;
-			motor[rightLift] = 127;
+			setPower(leftLift, -1);
+			setPower(rightLift, 1);
 		}
 		else if (potValLeft < pos)
 		{
-			motor[leftLift] = 127;
-			motor[rightLift] = -127;
+			setPower(leftLift, 1);
+			setPower(rightLift, -1);
 		}
 	}
 	motor[leftLift] = 0;
@@ -97,6 +105,8 @@ void pre_auton()
 	bStopTasksBetweenModes = true;
 	initStartPos();
 	initIMU();
+	MotorSetInit (leftLift, lLiftMotors, 3);
+	MotorSetInit (rightLift, rLiftMotors, 2);
 }
 
 void redLeft()
@@ -134,8 +144,8 @@ task usercontrol()
 		motor[lBack] =  vexRT[Ch3] - vexRT[Ch4] + vexRT[Ch1];
 		motor[rFront] = -vexRT[Ch3] + vexRT[Ch4] + vexRT[Ch1];
 		motor[rBack] = -vexRT[Ch3] - vexRT[Ch4] + vexRT[Ch1];
-		motor[leftLift] = motor[leftLiftY] = vexRT[Btn5U] ? -127 : vexRT[Btn5D] ? 127 : armLock ? -20 : 0;
-		motor[rightLift] = motor[rightLiftY] = vexRT[Btn5U] ? 127 : vexRT[Btn5D] ? -127 : armLock ? 20 : 0;
+		setPower(leftLift, vexRT[Btn5U] ? -127 : vexRT[Btn5D] ? 127 : armLock ? -20 : 0);
+		setPower(rightLift, vexRT[Btn5U] ? 127 : vexRT[Btn5D] ? -127 : armLock ? 20 : 0);
 		if (vexRT[Btn6D]){
 			armLock = !armLock;
 			delay(500);
