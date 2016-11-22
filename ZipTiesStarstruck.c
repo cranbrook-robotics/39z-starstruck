@@ -7,10 +7,8 @@
 
 
 int initX, initY, initH;
-bool armUp, armDown;
 float potValLeft, potValRight;
 int startTile;
-bool tracking = false;
 float curXSpd = 0, curYSpd = 0, curXPos, curYPos, curHeading;
 int interval = 75;
 float uC = 39.3701; //1 meter = 39.3701 inches
@@ -66,6 +64,16 @@ void setArm(float pos)
 	motor[rightLift] = 0;
 }
 
+void initPos()
+{
+	initX = startPos[startTile][0];
+	initY = startPos[startTile][1];
+	initH = startPos[startTile][2];
+	curXPos = initX;
+	curYPos = initY;
+	curHeading = initH;
+}
+
 task track()
 {
 	while (true)
@@ -91,8 +99,26 @@ void pre_auton()
 	initIMU();
 }
 
+void redLeft()
+{
+	startTile = 0;
+}
+void redRight()
+{
+	startTile = 1;
+}
+void blueLeft()
+{
+	startTile = 2;
+}
+void blueRight()
+{
+	startTile = 3;
+}
+
 task autonomous()
 {
+	initPos();
 	startTask(track);
 	stopTask(track);
 }
