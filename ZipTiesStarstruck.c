@@ -13,19 +13,26 @@ int startTile;
 bool tracking = false;
 float curXSpd = 0, curYSpd = 0, curXPos, curYPos, curHeading;
 int interval = 75;
-float uC = 1;
+float uC = 39.3701; //1 meter = 39.3701 inches
 
 int startPos[4][3];
 void initStartPos(){
+	//Red Left Tile
 	startPos[0][0] = 0;
 	startPos[0][1] = 0;
 	startPos[0][2] = 0;
+
+	//Red Right Tile
 	startPos[1][0] = 0;
 	startPos[1][1] = 0;
 	startPos[1][2] = 0;
+
+	//Blue Left Tile
 	startPos[2][0] = 0;
 	startPos[2][1] = 0;
 	startPos[2][2] = 0;
+
+	//Blue Right Tile
 	startPos[3][0] = 0;
 	startPos[3][1] = 0;
 	startPos[3][2] = 0;
@@ -36,15 +43,6 @@ void initIMU(){
 	curYSpd = 0;
 	curHeading = initH;
 	SensorValue[gyro] = initH;
-}
-
-void track()
-{
-	curXSpd += SensorValue(acX)*interval*uC;
-	curYSpd += SensorValue(acY)*interval*uC;
-	curXPos += curXSpd*interval*uC;
-	curYPos += curYSpd*interval*uC;
-	curHeading = SensorValue[gyro];
 }
 
 void setArm(float pos)
@@ -68,15 +66,35 @@ void setArm(float pos)
 	motor[rightLift] = 0;
 }
 
+task track()
+{
+	while (true)
+	{
+		curXSpd += SensorValue(acX)*interval*uC*1000; // m/s^2 * s/1000 * unit conversion
+		curYSpd += SensorValue(acY)*interval*uC*1000;
+		curXPos += curXSpd*interval*1000;
+		curYPos += curYSpd*interval*1000;
+		curHeading = SensorValue[gyro];
+		delay (interval);
+	}
+}
+
+void moveTo(float xTar, float yTar, float hTar)
+{
+
+}
+
 void pre_auton()
 {
 	bStopTasksBetweenModes = true;
 	initStartPos();
 	initIMU();
 }
+
 task autonomous()
 {
-
+	startTask(track);
+	stopTask(track);
 }
 
 task usercontrol()
