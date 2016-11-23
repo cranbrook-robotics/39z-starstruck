@@ -6,6 +6,7 @@
 #include <Vex_Competition_Includes.c>
 #include <CKVexMotorSet.h>
 #include <CKHolonomic.h>
+#include <ZipTiesSFCS.h>
 
 
 int initX, initY, initH; //Initial X, Y, Heading
@@ -117,6 +118,11 @@ void moveTo(float xTar, float yTar, float hTar)
 		yArrive = abs(yTar - curYPos) <= 1.5;
 		hArrive = abs(hTar - curHeading) <= 1.5;
 	}
+}
+
+void moveToPoint(coord cTar, float hTar)
+{
+	moveTo(cTar[0], cTar[1], hTar);
 }
 
 void pre_auton()
