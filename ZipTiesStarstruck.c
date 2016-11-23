@@ -102,13 +102,14 @@ task track()
 		curXPos += curXVel*interval;
 		curYPos += curYVel*interval;
 		curHeading = degreesToRadians(SensorValue(gyro)/10.);
-		delay (interval/1000);
+		delay (interval*1000);
 	}
 }
 
 //Moves robot to parameters X Coordinate, Y Coordinate, and Heading
 void moveTo(float xTar, float yTar, float hTar)
 {
+	hTar = degreesToRadians(hTar);
 	bool xArrive = false;
 	bool yArrive = false;
 	bool hArrive = false;
@@ -117,6 +118,7 @@ void moveTo(float xTar, float yTar, float hTar)
 		xArrive = abs(xTar - curXPos) <= 1.5;
 		yArrive = abs(yTar - curYPos) <= 1.5;
 		hArrive = abs(hTar - curHeading) <= 1.5;
+		delay(interval*1000);
 	}
 }
 
