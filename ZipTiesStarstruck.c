@@ -10,7 +10,7 @@
 
 
 int initX, initY, initH; //Initial X, Y, Heading
-float potValLeft, potValRight; //Potentiometer Value for Left Arm Tower, Right Arm Tower
+float potVal; //Potentiometer Value for Left Arm Tower, Right Arm Tower
 
 typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
 typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
@@ -20,13 +20,10 @@ StartingPosition side;
 float curXVel = 0, curYVel = 0, curXPos, curYPos, curHeading; //Current X Velociy, Y Velocity, X Position, Y Position, Heading
 float interval = 0.075; //Interval is in SECONDS
 
-tMotor lLiftMotors[] = {lLiftB, lLiftM, lLiftT}; //Array of Left Lift Motors
-MotorSet leftLift; //MotorSet of Right Lift Motors
+tMotor liftMotors[] = {lLiftT, rLiftT, botLift};
+MotorSet lift; //MotorSet of Right Lift Motors
 
-tMotor rLiftMotors[] = {rLiftB, rLiftY}; //Array of Right Lift Motors
-MotorSet rightLift; //MotorSet of Right Lift Motors
-
-tMotor driveMotors[] = {rBack, rFront, lBack, lFront}; //Array of Drive Motors
+tMotor driveMotors[] = {rBack, rFront, lFront, lBack}; //Array of Drive Motors
 HolonomicBase driveTrain; //HolonomicBase of Drive Train Motors
 
 float startX = 35.126; //All 4 starting tiles have +- this X Coord
@@ -61,23 +58,20 @@ void initAcc(){
 //Sets arm to a position along Potentiometer
 void setArm(float pos)
 {
-	potValLeft = SensorValue(potLeft);
-	while (potValLeft != pos)
+	potVal = SensorValue(pot);
+	while (potVal != pos)
 	{
-		potValLeft = SensorValue(potLeft);
-		if (potValLeft > pos)
+		potVal = SensorValue(pot);
+		if (potVal > pos)
 		{
-			setPower(leftLift, -1);
-			setPower(rightLift, 1);
+			setPower(lift, -1);
 		}
-		else if (potValLeft < pos)
+		else if (potVal < pos)
 		{
-			setPower(leftLift, 1);
-			setPower(rightLift, -1);
+			setPower(lift, 1);
 		}
 	}
-	motor[leftLift] = 0;
-	motor[rightLift] = 0;
+	setPower(lift, 0);
 }
 
 //Calculates Initial Position and Heading based on current side and team
@@ -132,8 +126,7 @@ void pre_auton()
 	bStopTasksBetweenModes = true;
 	SensorValue(initIndicator) = 1;
 	initAcc();
-	MotorSetInit (leftLift, lLiftMotors, 3);
-	MotorSetInit (rightLift, rLiftMotors, 2);
+	MotorSetInit (lift, liftMotors, 3);
 	SensorValue(initIndicator) = 0;
 	InitHolonomicBase(driveTrain, driveMotors, 4);
 }
@@ -177,10 +170,9 @@ task usercontrol()
 {
 	while (true)
 	{
-		potValLeft = SensorValue(potLeft);
-		potValRight = SensorValue(potRight);
+		potVal = SensorValue(pot);
 		setDriveXYR(driveTrain, vexRT[Ch4]/127., vexRT[Ch3]/127., vexRT[Ch1]/127.);
-		setPower(rightLift, vexRT[Btn5U] ? 1 : vexRT[Btn5D] ? -1 : 0);
-		setPower(leftLift, vexRT[Btn5U] ? -1 : vexRT[Btn5D] ? 1 : 0);
+		setPower(lift, vexRT[Btn5U] ? 1 : vexRT[Btn5D] ? -1 : 0);
+		motor[clawY] = vexRT[Btn6U] ? 127 : vexRT[Btn6D] ? -127 : 0;
 	}
 }
