@@ -11,8 +11,10 @@
 int initX, initY, initH;
 float potValLeft, potValRight;
 
-typedef enum StartingTile {redLeft, redRight, blueLeft, blueRight};
-StartingTile position;
+typedef enum StartingColor {red, blue};
+typedef enum StartingPosition {pole, noPole};
+StartingColor team;
+StartingPosition side;
 
 float curXSpd = 0, curYSpd = 0, curXPos, curYPos, curHeading;
 float interval = 0.075; //Interval is in SECONDS
@@ -26,32 +28,8 @@ MotorSet rightLift;
 tMotor driveMotors[] = {rBack, rFront, lBack, lFront};
 HolonomicBase driveTrain;
 
-typedef enum PositionAxes {xA, yA, hA};
-
-
-
-int startPos[4][3];
-void initStartPos(){
-	//Red Left Tile
-	startPos[redLeft][xA] = 0;
-	startPos[redLeft][yA] = 0;
-	startPos[redLeft][hA] = 0;
-
-	//Red Right Tile
-	startPos[redRight][xA] = 0;
-	startPos[redRight][yA] = 0;
-	startPos[redRight][hA] = 0;
-
-	//Blue Left Tile
-	startPos[blueLeft][xA] = 0;
-	startPos[blueLeft][yA] = 0;
-	startPos[blueLeft][hA] = 0;
-
-	//Blue Right Tile
-	startPos[blueRight][xA] = 0;
-	startPos[blueRight][yA] = 0;
-	startPos[blueRight][hA] = 0;
-}
+float startX = 35.126;
+float startY = 58.543;
 
 typedef enum AccAxis { XAxis, YAxis };
 tSensors accPorts[] = {acX, acY};
@@ -101,9 +79,9 @@ void setArm(float pos)
 
 void initPos()
 {
-	initX = startPos[position][xA];
-	initY = startPos[position][yA];
-	initH = startPos[position][hA];
+	initX = startX * (side == pole ? 1 : -1);
+	initY = startY * (team == blue ? 1 : -1);
+	initH = team == blue ? PI : 0;
 	curXPos = initX;
 	curYPos = initY;
 	curHeading = initH;
@@ -117,7 +95,7 @@ task track()
 		curYSpd += getAcc(YAxis)*interval;
 		curXPos += curXSpd*interval;
 		curYPos += curYSpd*interval;
-		curHeading = SensorValue(gyro);
+		curHeading = degreesToRadians(SensorValue(gyro)/10.);
 		delay (interval/1000);
 	}
 }
@@ -139,7 +117,6 @@ void pre_auton()
 {
 	bStopTasksBetweenModes = true;
 	SensorValue(initIndicator) = 1;
-	initStartPos();
 	initIMU();
 	MotorSetInit (leftLift, lLiftMotors, 3);
 	MotorSetInit (rightLift, rLiftMotors, 2);
@@ -149,25 +126,36 @@ void pre_auton()
 
 void redLeftAuto()
 {
-	position = redLeft;
+	team = red;
+	side = noPole;
+	initPos();
 }
 void redRightAuto()
 {
-	position = redRight;
+	team = red;
+	side = pole;
+	initPos();
 }
 void blueLeftAuto()
 {
-	position = blueLeft;
+	team = blue;
+	side = pole;
+	initPos();
 }
 void blueRightAuto()
 {
-	position = blueRight;
+	team = blue;
+	side = noPole;
+	initPos();
 }
 
 task autonomous()
 {
-	initPos();
 	startTask(track);
+	redLeftAuto();
+	//redRightAuto();
+	//blueLeftAuto();
+	//blueRightAuto();
 	stopTask(track);
 }
 
