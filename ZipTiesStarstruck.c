@@ -10,7 +10,10 @@
 
 int initX, initY, initH;
 float potValLeft, potValRight;
-int startTile;
+
+typedef enum StartingTile {redLeft, redRight, blueLeft, blueRight};
+StartingTile position;
+
 float curXSpd = 0, curYSpd = 0, curXPos, curYPos, curHeading;
 float interval = 0.075; //Interval is in SECONDS
 
@@ -23,28 +26,31 @@ MotorSet rightLift;
 tMotor driveMotors[] = {rBack, rFront, lBack, lFront};
 HolonomicBase driveTrain;
 
+typedef enum PositionAxes {xA, yA, hA};
+
+
 
 int startPos[4][3];
 void initStartPos(){
 	//Red Left Tile
-	startPos[0][0] = 0;
-	startPos[0][1] = 0;
-	startPos[0][2] = 0;
+	startPos[redLeft][xA] = 0;
+	startPos[redLeft][yA] = 0;
+	startPos[redLeft][hA] = 0;
 
 	//Red Right Tile
-	startPos[1][0] = 0;
-	startPos[1][1] = 0;
-	startPos[1][2] = 0;
+	startPos[redRight][xA] = 0;
+	startPos[redRight][yA] = 0;
+	startPos[redRight][hA] = 0;
 
 	//Blue Left Tile
-	startPos[2][0] = 0;
-	startPos[2][1] = 0;
-	startPos[2][2] = 0;
+	startPos[blueLeft][xA] = 0;
+	startPos[blueLeft][yA] = 0;
+	startPos[blueLeft][hA] = 0;
 
 	//Blue Right Tile
-	startPos[3][0] = 0;
-	startPos[3][1] = 0;
-	startPos[3][2] = 0;
+	startPos[blueRight][xA] = 0;
+	startPos[blueRight][yA] = 0;
+	startPos[blueRight][hA] = 0;
 }
 
 typedef enum AccAxis { XAxis, YAxis };
@@ -95,9 +101,9 @@ void setArm(float pos)
 
 void initPos()
 {
-	initX = startPos[startTile][0];
-	initY = startPos[startTile][1];
-	initH = startPos[startTile][2];
+	initX = startPos[position][xA];
+	initY = startPos[position][yA];
+	initH = startPos[position][hA];
 	curXPos = initX;
 	curYPos = initY;
 	curHeading = initH;
@@ -118,7 +124,15 @@ task track()
 
 void moveTo(float xTar, float yTar, float hTar)
 {
-	float translationalDirection = atan2(yTar, xTar);
+	bool xArrive = false;
+	bool yArrive = false;
+	bool hArrive = false;
+	while (!xArrive || !yArrive || !hArrive){
+		setDriveXYR(driveTrain, xTar - curXPos, yTar - curYPos, hTar - curHeading);
+		xArrive = abs(xTar - curXPos) <= 1.5;
+		yArrive = abs(yTar - curYPos) <= 1.5;
+		hArrive = abs(hTar - curHeading) <= 1.5;
+	}
 }
 
 void pre_auton()
@@ -133,31 +147,27 @@ void pre_auton()
 	InitHolonomicBase(driveTrain, driveMotors, 4);
 }
 
-void redLeft()
+void redLeftAuto()
 {
-	startTile = 0;
+	position = redLeft;
 }
-void redRight()
+void redRightAuto()
 {
-	startTile = 1;
+	position = redRight;
 }
-void blueLeft()
+void blueLeftAuto()
 {
-	startTile = 2;
+	position = blueLeft;
 }
-void blueRight()
+void blueRightAuto()
 {
-	startTile = 3;
+	position = blueRight;
 }
 
 task autonomous()
 {
 	initPos();
 	startTask(track);
-	//redLeft();
-	//redRight();
-	//blueLeft();
-	//blueRight();
 	stopTask(track);
 }
 
@@ -167,12 +177,7 @@ task usercontrol()
 	{
 		potValLeft = SensorValue(potLeft);
 		potValRight = SensorValue(potRight);
-		setDriveXYR(driveTrain, vexRT[Ch4], vexRT[Ch3], vexRT[Ch1]);
-		//motor[lFront] = vexRT[Ch3] + vexRT[Ch4] + vexRT[Ch1];
-		//motor[lBack] =  vexRT[Ch3] - vexRT[Ch4] + vexRT[Ch1];
-		//motor[rFront] = -vexRT[Ch3] + vexRT[Ch4] + vexRT[Ch1];
-		//motor[rBack] = -vexRT[Ch3] - vexRT[Ch4] + vexRT[Ch1];
-		//setPower(leftLift, vexRT[Btn5U] ? -127 : vexRT[Btn5D] ? 127 : 0);
+		setDriveXYR(driveTrain, vexRT[Ch4]/127., vexRT[Ch3]/127., vexRT[Ch1]/127.);
 		setPower(rightLift, vexRT[Btn5U] ? 127 : vexRT[Btn5D] ? -127 : 0);
 	}
 }
