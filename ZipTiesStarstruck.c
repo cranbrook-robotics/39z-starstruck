@@ -1,49 +1,50 @@
-#pragma config(UserModel, "39zconfig.c") //Cortex Configs
-#pragma platform(VEX)//Platform Type
-#pragma competitionControl(Competition) //This is a Competition Template
-#pragma autonomousDuration(15) //15 second autonomous mode
-#pragma userControlDuration(105) //1:45 driver control mode
-#include <Vex_Competition_Includes.c> //Uses Vex stuff
+#pragma config(UserModel, "39zconfig.c")
+#pragma platform(VEX)
+#pragma competitionControl(Competition)
+#pragma autonomousDuration(15)
+#pragma userControlDuration(105)
+#include <Vex_Competition_Includes.c>
 #include <CKVexMotorSet.h>
 #include <CKHolonomic.h>
 
 
-int initX, initY, initH;
-float potValLeft, potValRight;
+int initX, initY, initH; //Initial X, Y, Heading
+float potValLeft, potValRight; //Potentiometer Value for Left Arm Tower, Right Arm Tower
 
-typedef enum StartingColor {red, blue};
-typedef enum StartingPosition {pole, noPole};
+typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
+typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
 StartingColor team;
 StartingPosition side;
 
-float curXSpd = 0, curYSpd = 0, curXPos, curYPos, curHeading;
+float curXVel = 0, curYVel = 0, curXPos, curYPos, curHeading; //Current X Velociy, Y Velocity, X Position, Y Position, Heading
 float interval = 0.075; //Interval is in SECONDS
 
-tMotor lLiftMotors[] = {lLiftB, lLiftM, lLiftT};
-MotorSet leftLift;
+tMotor lLiftMotors[] = {lLiftB, lLiftM, lLiftT}; //Array of Left Lift Motors
+MotorSet leftLift; //MotorSet of Right Lift Motors
 
-tMotor rLiftMotors[] = {rLiftB, rLiftY};
-MotorSet rightLift;
+tMotor rLiftMotors[] = {rLiftB, rLiftY}; //Array of Right Lift Motors
+MotorSet rightLift; //MotorSet of Right Lift Motors
 
-tMotor driveMotors[] = {rBack, rFront, lBack, lFront};
-HolonomicBase driveTrain;
+tMotor driveMotors[] = {rBack, rFront, lBack, lFront}; //Array of Drive Motors
+HolonomicBase driveTrain; //HolonomicBase of Drive Train Motors
 
-float startX = 35.126;
-float startY = 58.543;
+float startX = 35.126; //All 4 starting tiles have +- this X Coord
+float startY = 58.543; //All 4 starting tiles have +- this Y Coord
 
-typedef enum AccAxis { XAxis, YAxis };
-tSensors accPorts[] = {acX, acY};
+typedef enum AccAxis { XAxis, YAxis }; //Axes Accelerometer Uses
+tSensors accPorts[] = {acX, acY}; //Ports Accelerometer Uses
 float accBias[] = {0, 0};
 
+//Calculate Value the Accelerometer Returns
 float getAcc(AccAxis axis)
 {
-	return SensorValue(accPorts[axis])*0.5234 - 1071.7 - accBias[axis];//Conversion from Accelerometer Returns to in/s^2
+	return SensorValue(accPorts[axis])*0.5234 - 1071.7 - accBias[axis]; //Conversion from Accelerometer Returns to in/s^2
 }
-void initIMU(){
-	curXSpd = 0;
-	curYSpd = 0;
-	curHeading = initH;
-	SensorValue(gyro) = initH;
+
+//Initializes the Accelerometer by Calculating Bias
+void initAcc(){
+	curXVel = 0;
+	curYVel = 0;
 	float xC = 0;
 	float yC = 0;
 	for (int i = 0; i < 50; i++)
@@ -56,6 +57,7 @@ void initIMU(){
 	accBias[YAxis] = yC/50;
 }
 
+//Sets arm to a position along Potentiometer
 void setArm(float pos)
 {
 	potValLeft = SensorValue(potLeft);
@@ -77,29 +79,33 @@ void setArm(float pos)
 	motor[rightLift] = 0;
 }
 
+//Calculates Initial Position and Heading based on current side and team
 void initPos()
 {
 	initX = startX * (side == pole ? 1 : -1);
 	initY = startY * (team == blue ? 1 : -1);
 	initH = team == blue ? PI : 0;
+	curHeading = initH;
+	SensorValue(gyro) = initH;
 	curXPos = initX;
 	curYPos = initY;
-	curHeading = initH;
 }
 
+//Tracks Current Location, Velocity, and Heading while the track task is being run
 task track()
 {
 	while (true)
 	{
-		curXSpd += getAcc(XAxis)*interval; // m/s^2 * s/1000 * unit conversion
-		curYSpd += getAcc(YAxis)*interval;
-		curXPos += curXSpd*interval;
-		curYPos += curYSpd*interval;
+		curXVel += getAcc(XAxis)*interval; // m/s^2 * s/1000 * unit conversion
+		curYVel += getAcc(YAxis)*interval;
+		curXPos += curXVel*interval;
+		curYPos += curYVel*interval;
 		curHeading = degreesToRadians(SensorValue(gyro)/10.);
 		delay (interval/1000);
 	}
 }
 
+//Moves robot to parameters X Coordinate, Y Coordinate, and Heading
 void moveTo(float xTar, float yTar, float hTar)
 {
 	bool xArrive = false;
@@ -117,7 +123,7 @@ void pre_auton()
 {
 	bStopTasksBetweenModes = true;
 	SensorValue(initIndicator) = 1;
-	initIMU();
+	initAcc();
 	MotorSetInit (leftLift, lLiftMotors, 3);
 	MotorSetInit (rightLift, rLiftMotors, 2);
 	SensorValue(initIndicator) = 0;
@@ -166,6 +172,7 @@ task usercontrol()
 		potValLeft = SensorValue(potLeft);
 		potValRight = SensorValue(potRight);
 		setDriveXYR(driveTrain, vexRT[Ch4]/127., vexRT[Ch3]/127., vexRT[Ch1]/127.);
-		setPower(rightLift, vexRT[Btn5U] ? 127 : vexRT[Btn5D] ? -127 : 0);
+		setPower(rightLift, vexRT[Btn5U] ? 1 : vexRT[Btn5D] ? -1 : 0);
+		setPower(leftLift, vexRT[Btn5U] ? -1 : vexRT[Btn5D] ? 1 : 0);
 	}
 }
