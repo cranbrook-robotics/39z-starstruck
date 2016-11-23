@@ -3,8 +3,9 @@
 #pragma competitionControl(Competition) //This is a Competition Template
 #pragma autonomousDuration(15) //15 second autonomous mode
 #pragma userControlDuration(105) //1:45 driver control mode
-#include "Vex_Competition_Includes.c" //Uses Vex stuff
-#include "CKVexMotorSet.h"
+#include <Vex_Competition_Includes.c> //Uses Vex stuff
+#include <CKVexMotorSet.h>
+#include <CKHolonomic.h>
 
 
 int initX, initY, initH;
@@ -18,6 +19,9 @@ MotorSet leftLift;
 
 tMotor rLiftMotors[] = {rLiftB, rLiftY};
 MotorSet rightLift;
+
+tMotor driveMotors[] = {rBack, rFront, lBack, lFront};
+HolonomicBase driveTrain;
 
 
 int startPos[4][3];
@@ -126,6 +130,7 @@ void pre_auton()
 	MotorSetInit (leftLift, lLiftMotors, 3);
 	MotorSetInit (rightLift, rLiftMotors, 2);
 	SensorValue(initIndicator) = 0;
+	InitHolonomicBase(driveTrain, driveMotors, 4);
 }
 
 void redLeft()
@@ -162,11 +167,12 @@ task usercontrol()
 	{
 		potValLeft = SensorValue(potLeft);
 		potValRight = SensorValue(potRight);
-		motor[lFront] = vexRT[Ch3] + vexRT[Ch4] + vexRT[Ch1];
-		motor[lBack] =  vexRT[Ch3] - vexRT[Ch4] + vexRT[Ch1];
-		motor[rFront] = -vexRT[Ch3] + vexRT[Ch4] + vexRT[Ch1];
-		motor[rBack] = -vexRT[Ch3] - vexRT[Ch4] + vexRT[Ch1];
-		setPower(leftLift, vexRT[Btn5U] ? -127 : vexRT[Btn5D] ? 127 : 0);
+		setDriveXYR(driveTrain, vexRT[Ch4], vexRT[Ch3], vexRT[Ch1]);
+		//motor[lFront] = vexRT[Ch3] + vexRT[Ch4] + vexRT[Ch1];
+		//motor[lBack] =  vexRT[Ch3] - vexRT[Ch4] + vexRT[Ch1];
+		//motor[rFront] = -vexRT[Ch3] + vexRT[Ch4] + vexRT[Ch1];
+		//motor[rBack] = -vexRT[Ch3] - vexRT[Ch4] + vexRT[Ch1];
+		//setPower(leftLift, vexRT[Btn5U] ? -127 : vexRT[Btn5D] ? 127 : 0);
 		setPower(rightLift, vexRT[Btn5U] ? 127 : vexRT[Btn5D] ? -127 : 0);
 	}
 }
