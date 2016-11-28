@@ -25,13 +25,6 @@ void initAcc(){
 	curYVel = 0;
 	float xC = 0;
 	float yC = 0;
-<<<<<<< HEAD
-	for (int i = 0; i < 50; i++)
-	{
-		xC += getAcc(XAxis);
-		yC += getAcc(YAxis);
-		delay(50);
-=======
 	float AccThresh = 0.001;
 	for( int count = 0; count < 10 && abs(getAcc(XAxis)) > AccThresh && abs(getAcc(YAxis)) > AccThresh; ++count ){
 		for (int i = 0; i < 50; i++)
@@ -42,7 +35,6 @@ void initAcc(){
 		}
 		accBias[XAxis] = xC/50;
 		accBias[YAxis] = yC/50;
->>>>>>> origin/master
 	}
 }
 
