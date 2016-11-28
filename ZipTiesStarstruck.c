@@ -55,6 +55,14 @@ void initAcc(){
 	accBias[YAxis] = yC/50;
 }
 
+void initGyro(){
+	SensorType[gyro] = sensorNone;
+	wait1Msec(1000);
+	SensorType[gyro] = sensorGyro;
+	wait1Msec(2000);
+	SensorValue(gyro) = 0;
+}
+
 //Sets arm to a position along Potentiometer
 void setArm(float pos)
 {
@@ -126,6 +134,7 @@ void pre_auton()
 	bStopTasksBetweenModes = true;
 	SensorValue(initIndicator) = 1;
 	initAcc();
+	initGyro();
 	MotorSetInit (lift, liftMotors, 3);
 	SensorValue(initIndicator) = 0;
 	InitHolonomicBase(driveTrain, driveMotors, 4);
