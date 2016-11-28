@@ -1,18 +1,15 @@
-#pragma config(UserModel, "C:/Users/rstudent/code/39-competition/config.c") //Cortex Configs
+#pragma config(UserModel, "39zconfig.c") //Cortex Configs
 //#include "Vex_Competition_Includes.c" //Uses Vex stuff
 #include <CKVexMotorSet.h>
 task main()
 {
-float potValLeft = SensorValue(potLeft);
-float potValRight = SensorValue(potRight);
+float potVal = SensorValue(pot);
 clearDebugStream();
 while(true)
 {
-	potValLeft = SensorValue(potLeft);
-	potValRight = SensorValue(potRight);
+	potVal = SensorValue(pot);
 
-	writeDebugStreamLine("Left: %f", potValLeft);
-	writeDebugStreamLine("Right: %f", potValRight);
+	writeDebugStreamLine("Pot: %f", potVal);
 	delay(500);
 }
 
