@@ -29,7 +29,7 @@ void initAcc(){
 	{
 		xC += getAcc(XAxis);
 		yC += getAcc(YAxis);
-		delay(10);
+		delay(50);
 	}
 	accBias[XAxis] = xC/50;
 	accBias[YAxis] = yC/50;
@@ -64,7 +64,7 @@ task track()
 		curYVel += getAcc(YAxis)*interval;
 		curXPos += curXVel*interval;
 		curYPos += curYVel*interval;
-		curHeading = degreesToRadians(SensorValue(gyro)/10.);
+		curHeading = SensorValue(gyro)/10.;
 		delay (interval*1000);
 	}
 }
