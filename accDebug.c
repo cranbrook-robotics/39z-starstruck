@@ -16,7 +16,7 @@ float accBias[] = {0, 0};
 //Calculate Value the Accelerometer Returns
 float getAcc(AccAxis axis)
 {
-	return SensorValue(accPorts[axis] - accBias[axis])*0.5234 - 1071.7; //Conversion from Accelerometer Returns to in/s^2
+	return SensorValue(accPorts[axis])*0.5234 - 1071.7 - accBias[axis]; //Conversion from Accelerometer Returns to in/s^2
 }
 
 //Initializes the Accelerometer by Calculating Bias
@@ -25,11 +25,12 @@ void initAcc(){
 	curYVel = 0;
 	float xC = 0;
 	float yC = 0;
+	float AccThresh = 0.001;
 	for (int i = 0; i < 50; i++)
 	{
-		xC += (accPorts[YAxis] - 2047.5);
-		yC += (accPorts[XAxis] - 2047.5);
-		delay(100);
+		xC += getAcc(XAxis);
+		yC += getAcc(YAxis);
+		delay(10);
 	}
 	accBias[XAxis] = xC/50;
 	accBias[YAxis] = yC/50;
@@ -86,8 +87,8 @@ task main()
 	startTask(track);
 	while(true)
 	{
-		writeDebugStreamLine("CurXAcc: %f", getAcc(XAxis));
-		writeDebugStreamLine("CurYAcc: %f", getAcc(YAxis));
+		writeDebugStreamLine("CurXPos: %f", curXPos);
+		writeDebugStreamLine("CurYPos: %f", curYPos);
 		delay(500);
 
 	}
