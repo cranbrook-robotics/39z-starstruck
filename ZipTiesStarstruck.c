@@ -179,13 +179,16 @@ task usercontrol()
 {
 	while (true)
 	{
+
+
 		potVal = SensorValue(pot);
 		setDriveXYR(driveTrain, vexRT[Ch4]/127., vexRT[Ch3]/127., vexRT[Ch1]/127.);
-		if (potVal < 155 && vexRT[Btn5U])
+		if (potVal < 155 && vexRT[Btn5UXmtr2])
 			motor[clawY] = -127;
 		else
-			motor[clawY] = vexRT[Btn6U] ? 127 : vexRT[Btn6D] ? -127 : 0;
-		setPower(lift, vexRT[Btn5U] ? 1 : vexRT[Btn5D] ? -1 : 0);
+			motor[clawY] = vexRT[Btn6UXmtr2] ? 127 : vexRT[Btn6DXmtr2] ? -127 : 0;
+		setPower(lift, vexRT[Btn5UXmtr2] ? 1 : vexRT[Btn5DXmtr2] ? -1 : 0);
+
 
 	}
 }
