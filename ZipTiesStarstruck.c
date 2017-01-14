@@ -11,6 +11,7 @@
 
 int initX, initY, initH; //Initial X, Y, Heading
 float potVal; //Potentiometer Value for Left Arm Tower, Right Arm Tower
+float clawPot; //Potentiometer for the Claw
 
 typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
 typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
@@ -41,26 +42,26 @@ float getAcc(AccAxis axis)
 
 //Initializes the Accelerometer by Calculating Bias
 void initAcc(){
-	curXVel = 0;
+	curXVel = 0; //Robot starts out not moving
 	curYVel = 0;
-	float xC = 0;
+	float xC = 0; //Counter for bias along each axis
 	float yC = 0;
 	for (int i = 0; i < 50; i++)
 	{
-		xC += getAcc(XAxis);
+		xC += getAcc(XAxis); //Summing bias over period
 		yC += getAcc(YAxis);
 		delay(10);
 	}
-	accBias[XAxis] = xC/50;
-	accBias[YAxis] = yC/50;
+	accBias[XAxis] = xC/50.; //Average bias over initialization period
+	accBias[YAxis] = yC/50.;
 }
 
 void initGyro(){
-	SensorType[gyro] = sensorNone;
+	SensorType[gyro] = sensorNone; //Fixes common RobotC error with initializing Gyroscope
 	wait1Msec(1000);
 	SensorType[gyro] = sensorGyro;
 	wait1Msec(2000);
-	SensorValue(gyro) = 0;
+	SensorValue(gyro) = 0; //Default Gyro heading is 0
 }
 
 //Sets arm to a position along Potentiometer
@@ -85,9 +86,9 @@ void setArm(float pos)
 //Calculates Initial Position and Heading based on current side and team
 void initPos()
 {
-	initX = startX * (side == pole ? 1 : -1);
-	initY = startY * (team == blue ? 1 : -1);
-	initH = team == blue ? PI : 0;
+	initX = startX * ((side == pole) ? 1 : -1); //Which side of the field is the robot starting on?
+	initY = startY * ((team == blue) ? 1 : -1);
+	initH = (team == blue) ? PI : 0; //Heading is determined by which color (which direction are we facing)
 	curHeading = initH;
 	SensorValue(gyro) = initH;
 	curXPos = initX;
@@ -139,30 +140,55 @@ void pre_auton()
 	SensorValue(initIndicator) = 0;
 	InitHolonomicBase(driveTrain, driveMotors, 4);
 }
+void setClaw(float pOpen) //pOpen: _ for full forward, _ for full backward, _ for straight across
+{
+	clawPot = SensorValue(cPot); 
+	while (clawPot != pOpen)
+	{
+		clawPot = SensorValue(cPot);
+		if (clawPot > pOpen)
+		{
+			motor[clawY] = 127;
+		}
+		else if (clawPot < pOpen)
+		{
+			motor[clawY] = -127;
+		}
+	}
+	setPower(lift, 0);
+}
 
 void redLeftAuto()
 {
 	team = red;
 	side = noPole;
 	initPos();
+	setClaw(2000);
+	moveToPoint(ws2, 0);
 }
 void redRightAuto()
 {
 	team = red;
 	side = pole;
 	initPos();
+	setClaw(2000);
+	moveToPoint(ws9, 0);
 }
 void blueLeftAuto()
 {
 	team = blue;
 	side = pole;
 	initPos();
+	setClaw(2000);
+	moveToPoint(ws9, 180);
 }
 void blueRightAuto()
 {
 	team = blue;
 	side = noPole;
 	initPos();
+	setClaw(2000);
+	moveToPoint(ws2, 180);
 }
 
 task autonomous()
