@@ -11,7 +11,8 @@
 
 int initX, initY, initH; //Initial X, Y, Heading
 float potVal; //Potentiometer Value for Left Arm Tower, Right Arm Tower
-float clawPot; //Potentiometer for the Claw
+float clawPotVal; //Potentiometer for the Claw
+float clawTar;
 
 typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
 typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
@@ -83,6 +84,27 @@ void setArm(float pos)
 	setPower(lift, 0);
 }
 
+task setClaw()
+{
+	clawPotVal = SensorValue(clawPot);
+	while (true)
+	{
+		clawPotVal = SensorValue(clawPot);
+		if ((clawPotVal - clawTar) > 30)
+		{
+			motor[clawY] = 127;
+		}
+		else if ((potVal - clawTar) > 30)
+		{
+			motor[clawY] = -127;
+		}
+		else
+			motor[clawY] = 0;
+	}
+	//motor[clawY] = 0;
+
+}
+
 //Calculates Initial Position and Heading based on current side and team
 void initPos()
 {
@@ -140,30 +162,14 @@ void pre_auton()
 	SensorValue(initIndicator) = 0;
 	InitHolonomicBase(driveTrain, driveMotors, 4);
 }
-void setClaw(float pOpen) //pOpen: _ for full forward, _ for full backward, _ for straight across
-{
-	clawPot = SensorValue(cPot); 
-	while (clawPot != pOpen)
-	{
-		clawPot = SensorValue(cPot);
-		if (clawPot > pOpen)
-		{
-			motor[clawY] = 127;
-		}
-		else if (clawPot < pOpen)
-		{
-			motor[clawY] = -127;
-		}
-	}
-	setPower(lift, 0);
-}
+
 
 void redLeftAuto()
 {
 	team = red;
 	side = noPole;
 	initPos();
-	setClaw(2000);
+	//setClaw(2000);
 	moveToPoint(ws2, 0);
 }
 void redRightAuto()
@@ -171,7 +177,7 @@ void redRightAuto()
 	team = red;
 	side = pole;
 	initPos();
-	setClaw(2000);
+	//setClaw(2000);
 	moveToPoint(ws9, 0);
 }
 void blueLeftAuto()
@@ -179,24 +185,50 @@ void blueLeftAuto()
 	team = blue;
 	side = pole;
 	initPos();
-	setClaw(2000);
-	moveToPoint(ws9, 180);
+	//setClaw(2000);
+	//moveToPoint(ws9, 180);
+	motor[clawY] = 127;
+	delay(1500);
+	motor[clawY] = 0;
+	while (potVal > 230){
+		setPower(lift, 1);
+		potVal = SensorValue(pot);}
+	setPower(lift, 0);
+	curHeading = SensorValue(gyro);
+	setDriveXYR(driveTrain,0,1,0);
+	delay(1000);
+	setDriveXYR(driveTrain,0,0,1);
+	delay(1250);
+	setDriveXYR(driveTrain,0,-1,0);
+	setPOwer(lift, 1);
+	motor[clawY] = -127;
+	delay(2000);
+	motor[clawY] = 0;
+	setDriveXYR(driveTrain,1,1,0);
+	delay(750);
+	setDriveXYR(driveTrain,0,-1,0);
+	delay(1000);
+	setDriveXYR(driveTrain,0,1,0);
+	delay(1000);
+	setDriveXYR(driveTrain,0,0,0);
+
+
 }
 void blueRightAuto()
 {
 	team = blue;
 	side = noPole;
 	initPos();
-	setClaw(2000);
+	//setClaw(2000);
 	moveToPoint(ws2, 180);
 }
 
 task autonomous()
 {
 	startTask(track);
-	redLeftAuto();
+	//redLeftAuto();
 	//redRightAuto();
-	//blueLeftAuto();
+	blueLeftAuto();
 	//blueRightAuto();
 	stopTask(track);
 }
@@ -205,14 +237,12 @@ task usercontrol()
 {
 	while (true)
 	{
-
-
+		//clawTar = 2800;
+		//startTask(setClaw);
 		potVal = SensorValue(pot);
 		setDriveXYR(driveTrain, vexRT[Ch4]/127., vexRT[Ch3]/127., vexRT[Ch1]/127.);
-		if (potVal < 155 && vexRT[Btn5UXmtr2])
-			motor[clawY] = -127;
-		else
-			motor[clawY] = vexRT[Btn6UXmtr2] ? 127 : vexRT[Btn6DXmtr2] ? -127 : 0;
+		motor[clawY] = vexRT[Btn6UXmtr2] ? 127 : vexRT[Btn6DXmtr2] ? -127 : 0;
+		//clawTar = vexRT[Btn8LXmtr2] ? 1000 : vexRT[Btn8DXmtr2] ? 1800 : vexRT[Btn8RXmtr2] ? 2800 : clawTar;
 		setPower(lift, vexRT[Btn5UXmtr2] ? 1 : vexRT[Btn5DXmtr2] ? -1 : 0);
 
 
