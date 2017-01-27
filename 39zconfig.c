@@ -4,6 +4,7 @@
 #pragma config(Sensor, in4,    acX,            sensorAnalog)
 #pragma config(Sensor, in5,    acY,            sensorAnalog)
 #pragma config(Sensor, in6,    acZ,            sensorAnalog)
+#pragma config(Sensor, in7,    clawPot,        sensorNone)
 #pragma config(Sensor, dgtl12, initIndicator,  sensorLEDtoVCC)
 #pragma config(Motor,  port2,           lBack,         tmotorVex393_MC29, openLoop, reversed)
 #pragma config(Motor,  port3,           lFront,        tmotorVex393_MC29, openLoop, reversed)
