@@ -12,7 +12,6 @@
 int initX, initY, initH; //Initial X, Y, Heading
 float potVal; //Potentiometer Value for Left Arm Tower, Right Arm Tower
 float clawPotVal; //Potentiometer for the Claw
-float clawTar;
 
 typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
 typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
@@ -84,27 +83,6 @@ void setArm(float pos)
 	setPower(lift, 0);
 }
 
-task setClaw()
-{
-	clawPotVal = SensorValue(clawPot);
-	while (true)
-	{
-		clawPotVal = SensorValue(clawPot);
-		if ((clawPotVal - clawTar) > 30)
-		{
-			motor[clawY] = 127;
-		}
-		else if ((potVal - clawTar) > 30)
-		{
-			motor[clawY] = -127;
-		}
-		else
-			motor[clawY] = 0;
-	}
-	//motor[clawY] = 0;
-
-}
-
 //Calculates Initial Position and Heading based on current side and team
 void initPos()
 {
@@ -155,6 +133,9 @@ void moveToPoint(coord cTar, float hTar)
 void pre_auton()
 {
 	bStopTasksBetweenModes = true;
+	bLCDBacklight = true;
+	clearLCDLine(0);
+	clearLCDLine(1);
 	SensorValue(initIndicator) = 1;
 	initAcc();
 	initGyro();
@@ -163,6 +144,18 @@ void pre_auton()
 	InitHolonomicBase(driveTrain, driveMotors, 4);
 }
 
+task lcdManager()
+{
+	string lcdBatteryVoltages;
+	while(true)
+	{
+		sprintf(lcdBatteryVoltages, "M: %.2f P: %.2f", MainBatteryVoltage(), powerExpanderVoltage(pPowerExp));
+		clearLCDLine(0);
+		clearLCDLine(1);
+		displayLCDString(0,0,lcdBatteryVoltages);
+		delay(300);
+	}
+}
 
 void redLeftAuto()
 {
@@ -200,7 +193,7 @@ void blueLeftAuto()
 	setDriveXYR(driveTrain,0,0,1);
 	delay(1250);
 	setDriveXYR(driveTrain,0,-1,0);
-	setPOwer(lift, 1);
+	setPower(lift, 1);
 	motor[clawY] = -127;
 	delay(2000);
 	motor[clawY] = 0;
@@ -237,14 +230,10 @@ task usercontrol()
 {
 	while (true)
 	{
-		//clawTar = 2800;
-		//startTask(setClaw);
+		startTask(lcdManager);
 		potVal = SensorValue(pot);
 		setDriveXYR(driveTrain, vexRT[Ch4]/127., vexRT[Ch3]/127., vexRT[Ch1]/127.);
 		motor[clawY] = vexRT[Btn6UXmtr2] ? 127 : vexRT[Btn6DXmtr2] ? -127 : 0;
-		//clawTar = vexRT[Btn8LXmtr2] ? 1000 : vexRT[Btn8DXmtr2] ? 1800 : vexRT[Btn8RXmtr2] ? 2800 : clawTar;
 		setPower(lift, vexRT[Btn5UXmtr2] ? 1 : vexRT[Btn5DXmtr2] ? -1 : 0);
-
-
 	}
 }
