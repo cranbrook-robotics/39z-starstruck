@@ -47,11 +47,11 @@ void setArm(float pos)
 		potVal = SensorValue(pot);
 		if (potVal > pos)
 		{
-			setPower(lift, -1);
+			setPower(lift, 1);
 		}
 		else if (potVal < pos)
 		{
-			setPower(lift, 1);
+			setPower(lift, -1);
 		}
 	}
 	setPower(lift, 0);
@@ -74,18 +74,38 @@ task setClaw()
 		}
 		else if ((clawPotVal - clawTar) > 30)
 		{
-			motor[clawY] = 127;
+			motor[clawY] = -50;
 		}
 		else if ((potVal - clawTar) > 30)
 		{
-			motor[clawY] = -127;
+			motor[clawY] = 50;
 		}
 		else
 			motor[clawY] = 0;
-		clawTar = vexRT[Btn8LXmtr2] ? 1000 : vexRT[Btn8DXmtr2] ? 1800 : vexRT[Btn8RXmtr2] ? 2800 : clawTar;
+		clawTar = vexRT[Btn8LXmtr2] ? 1200 : vexRT[Btn8DXmtr2] ? 2000 : vexRT[Btn8RXmtr2] ? 3000 : clawTar;
 		delay(300);
 	}
 }
+task clawNoControls()
+{
+	while (true)
+	{
+		clawPotVal = SensorValue(clawPot);
+		if ((clawPotVal - clawTar) > 30)
+		{
+			motor[clawY] = -50;
+		}
+		if ((potVal - clawTar) > 30)
+		{
+			motor[clawY] = 50;
+		}
+		else
+			motor[clawY] = 0;
+		delay(30);
+	}
+
+}
+
 
 
 void pre_auton()
@@ -118,7 +138,7 @@ void leftAuto()
 
 	//Turn right
 	setDriveXYR(driveTrain,0,0,1);
-	delay(1250);
+	delay(1000);
 
 	//Back into fence and dump star over
 	setDriveXYR(driveTrain,0,-1,0);
@@ -192,22 +212,50 @@ void rightAuto()
 	setDriveXYR(driveTrain,0,-1,0);
 	delay(1000);
 	setDriveXYR(driveTrain,0,0,0);
+}
 
+void newAuto()
+{
+	//Grap preload star
+	motor[clawY] = 127;
+	delay(1000);
+	motor[clawY] = 0;
+	setDriveXYR(driveTrain,0,1,0);
+	delay(500);
+	setPower(lift, 1);
+	delay(1000);
+	setPower(lift,0);
+	delay(4000);
+	setDriveXYR(driveTrain,0,0,0);
+	motor[clawY] = -127;
+	delay(1000);
+	motor[clawY] = 0;
+	/*setDriveXYR(driveTrain,0,-1,0);
+	delay(1500);
+	setDriveXYR(driveTrain,1,0,0);
+	delay(1500);
+	setDRiveXYR(driveTrain,0,1,0);
+	delay(2000);
+	setDriveXYR(driveTrain,0,-1,0);
+	delay(1000);
+	setDriveXYR(driveTrain,0,0,0);*/
 
 }
 task autonomous()
 {
 	startTask(trackGyro);
 	//rightAuto();
-	leftAuto();
+	//leftAuto();
+	newAuto();
 }
 
 task usercontrol()
 {
-	clawTar = 2800;
+	clawTar = 1200;
 	while (true)
 	{
-		startTask(setClaw);
+		//startTask(setClaw);
+			motor[clawY] = vexRT[Btn6UXmtr2] ? 127 : vexRT[Btn6DXmtr2] ? -127 : 0;
 		potVal = SensorValue(pot);
 		setDriveXYR(driveTrain, vexRT[Ch4]/127., vexRT[Ch3]/127., vexRT[Ch1]/127.);
 		setPower(lift, vexRT[Btn5UXmtr2] ? 1 : vexRT[Btn5DXmtr2] ? -1 : 0);
