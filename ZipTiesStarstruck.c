@@ -11,13 +11,8 @@
 
 
 int initX, initY, initH; //Initial X, Y, Heading
-<<<<<<< HEAD
-float potVal; //Potentiometer Value for Left Arm Tower, Right Arm Tower
-float clawPotVal; //Potentiometer for the Claw
-=======
 
 IME lFrontIME, rFrontIME, lBackIME, rBackIME;
->>>>>>> origin/master
 
 typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
 typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
@@ -51,28 +46,6 @@ void initGyro(){
 	SensorValue(gyro) = 0; //Default Gyro heading is 0
 }
 
-<<<<<<< HEAD
-//Sets arm to a position along Potentiometer
-void setArm(float pos)
-{
-	potVal = SensorValue(pot);
-	while (potVal != pos)
-	{
-		potVal = SensorValue(pot);
-		if (potVal > pos)
-		{
-			setPower(lift, -1);
-		}
-		else if (potVal < pos)
-		{
-			setPower(lift, 1);
-		}
-	}
-	setPower(lift, 0);
-}
-
-=======
->>>>>>> origin/master
 //Calculates Initial Position and Heading based on current side and team
 void initPos()
 {
@@ -132,7 +105,6 @@ void pre_auton()
 	InitHolonomicBase(driveTrain, driveMotors, 4);
 }
 
-<<<<<<< HEAD
 task lcdManager()
 {
 	string lcdBatteryVoltages;
@@ -145,70 +117,11 @@ task lcdManager()
 		delay(300);
 	}
 }
-
-void redLeftAuto()
-{
-	team = red;
-	side = noPole;
-	initPos();
-	//setClaw(2000);
-	moveToPoint(ws2, 0);
-}
-void redRightAuto()
-{
-	team = red;
-	side = pole;
-	initPos();
-	//setClaw(2000);
-	moveToPoint(ws9, 0);
-}
-=======
->>>>>>> origin/master
 void blueLeftAuto()
 {
 	team = blue;
 	side = pole;
 	initPos();
-<<<<<<< HEAD
-	//setClaw(2000);
-	//moveToPoint(ws9, 180);
-	motor[clawY] = 127;
-	delay(1500);
-	motor[clawY] = 0;
-	while (potVal > 230){
-		setPower(lift, 1);
-		potVal = SensorValue(pot);}
-	setPower(lift, 0);
-	curHeading = SensorValue(gyro);
-	setDriveXYR(driveTrain,0,1,0);
-	delay(1000);
-	setDriveXYR(driveTrain,0,0,1);
-	delay(1250);
-	setDriveXYR(driveTrain,0,-1,0);
-	setPower(lift, 1);
-	motor[clawY] = -127;
-	delay(2000);
-	motor[clawY] = 0;
-	setDriveXYR(driveTrain,1,1,0);
-	delay(750);
-	setDriveXYR(driveTrain,0,-1,0);
-	delay(1000);
-	setDriveXYR(driveTrain,0,1,0);
-	delay(1000);
-	setDriveXYR(driveTrain,0,0,0);
-
-
-}
-void blueRightAuto()
-{
-	team = blue;
-	side = noPole;
-	initPos();
-	//setClaw(2000);
-	moveToPoint(ws2, 180);
-=======
-	moveToPoint(ws9, 180);
->>>>>>> origin/master
 }
 
 task autonomous()
@@ -222,11 +135,7 @@ task usercontrol()
 {
 	while (true)
 	{
-<<<<<<< HEAD
 		startTask(lcdManager);
-		potVal = SensorValue(pot);
-=======
->>>>>>> origin/master
 		setDriveXYR(driveTrain, vexRT[Ch4]/127., vexRT[Ch3]/127., vexRT[Ch1]/127.);
 		motor[clawY] = vexRT[Btn6UXmtr2] ? 127 : vexRT[Btn6DXmtr2] ? -127 : 0;
 		setPower(lift, vexRT[Btn5UXmtr2] ? 1 : vexRT[Btn5DXmtr2] ? -1 : 0);
