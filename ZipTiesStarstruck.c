@@ -13,6 +13,10 @@
 int initX, initY, initH; //Initial X, Y, Heading
 
 IME lFrontIME, rFrontIME, lBackIME, rBackIME;
+IME baseEncoders[] = {lFrontIME, lBackIME, rFrontIME, rBackIME};
+int wheelAngles[] = {225, 315, 135, 45};
+int wheelRadius = 2;
+int potVal, clawPotVal;
 
 typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
 typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
@@ -38,6 +42,44 @@ void initIME(){
 	IMEInit( rBackIME, 8);
 }
 
+float dxRobot()
+{
+	float displacement = 0;
+	int count = 0;
+	for (int encoder = 0; encoder < 4; encoder++)
+	{
+		float wheelDisplacement = baseEncoders[encoder].position * wheelRadius;
+		baseEncoders[encoder].position = 0;
+		float directionCosine = cos(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
+		if (directionCosine != 0.0)
+		{
+			count++;
+			displacement += wheelDisplacement / directionCosine;
+		}
+	}
+	displacement /= count;
+	return displacement;
+}
+
+float dyRobot()
+{
+	float displacement = 0;
+	int count = 0;
+	for (int encoder = 0; encoder < 4; encoder++)
+	{
+		float wheelDisplacement = baseEncoders[encoder].position * wheelRadius;
+		baseEncoders[encoder].position = 0;
+		float directionSine = sin(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
+		if (directionSine != 0.0)
+		{
+			count++;
+			displacement += wheelDisplacement / directionSine;
+		}
+	}
+	displacement /= count;
+	return displacement;
+}
+
 void initGyro(){
 	SensorType[gyro] = sensorNone; //Fixes common RobotC error with initializing Gyroscope
 	wait1Msec(1000);
@@ -58,16 +100,52 @@ void initPos()
 	curYPos = initY;
 }
 
-//Tracks Current Location, Velocity, and Heading while the track task is being run
+//Tracks Current Location and Heading while the track task is being run
 task track()
 {
 	while (true)
 	{
-		curXPos += sqrt(2) * (lFrontIME.position + rBackIME.position - rFrontIME.position - lBackIME.position) / 4.0;
-		curYPos += sqrt(2) * (lFrontIME.position + lBackIME.position + rFrontIME.position+ rBackIME.position) / 4.0;
 		curHeading = SensorValue(gyro);
+		curXPos += dxRobot();
+		curYPos += dyRobot();
 		delay (interval*1000);
+		potVal = SensorValue(pot);
+		clawPotVal = SensorValue(clawPot);
 	}
+}
+
+void setArm(float percentage)
+{
+	int potTarget = percentage*19.69 + 1579;
+	while (abs(potVal - potTarget) > 5)
+	{
+		if (potVal > potTarget)
+		{
+			setPower(lift, 1);
+		}
+		else if (potVal < potTarget)
+		{
+			setPower(lift, -1);
+		}
+	}
+	setPower(lift, 0);
+}
+
+void setClaw(float percentage)
+{
+	int potTarget = percentage*17.4 + 1200;
+	while (abs(clawPotVal - potTarget) > 5)
+	{
+		if (clawPotVal > potTarget)
+		{
+			motor[clawY] = -127;
+		}
+		else if (clawPotVal < potTarget)
+		{
+			motor[clawY] = 127;
+		}
+	}
+	motor[clawY] = 0;
 }
 
 //Moves robot to parameters X Coordinate, Y Coordinate, and Heading
