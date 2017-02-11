@@ -7,6 +7,7 @@
 #include <CKVexMotorSet.h>
 #include <CKHolonomic.h>
 #include <ZipTiesSFCS.h>
+#include <CKVexIME.h>
 
 
 int initX, initY, initH; //Initial X, Y, Heading
@@ -14,12 +15,14 @@ float potVal; //Potentiometer Value for Left Arm Tower, Right Arm Tower
 float clawPotVal; //Potentiometer for the Claw
 float clawTar;
 
+IME lFrontIME, rFrontIME, lBackIME, rBackIME;
+
 typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
 typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
 StartingColor team;
 StartingPosition side;
 
-float curXVel = 0, curYVel = 0, curXPos, curYPos, curHeading; //Current X Velociy, Y Velocity, X Position, Y Position, Heading
+float curXPos, curYPos, curHeading; //Current X Position, Y Position, Heading
 float interval = 0.075; //Interval is in SECONDS
 
 tMotor liftMotors[] = {lLiftT, rLiftT, botLift};
@@ -31,30 +34,11 @@ HolonomicBase driveTrain; //HolonomicBase of Drive Train Motors
 float startX = 35.126; //All 4 starting tiles have +- this X Coord
 float startY = 58.543; //All 4 starting tiles have +- this Y Coord
 
-typedef enum AccAxis { XAxis, YAxis }; //Axes Accelerometer Uses
-tSensors accPorts[] = {acX, acY}; //Ports Accelerometer Uses
-float accBias[] = {0, 0};
-
-//Calculate Value the Accelerometer Returns
-float getAcc(AccAxis axis)
-{
-	return SensorValue(accPorts[axis])*0.5234 - 1071.7 - accBias[axis]; //Conversion from Accelerometer Returns to in/s^2
-}
-
-//Initializes the Accelerometer by Calculating Bias
-void initAcc(){
-	curXVel = 0; //Robot starts out not moving
-	curYVel = 0;
-	float xC = 0; //Counter for bias along each axis
-	float yC = 0;
-	for (int i = 0; i < 50; i++)
-	{
-		xC += getAcc(XAxis); //Summing bias over period
-		yC += getAcc(YAxis);
-		delay(10);
-	}
-	accBias[XAxis] = xC/50.; //Average bias over initialization period
-	accBias[YAxis] = yC/50.;
+void initIME(){
+	IMEInit( lFrontIME, 3);
+	IMEInit( rFrontIME, 9);
+	IMEInit( lBackIME, 2);
+	IMEInit( rBackIME, 8);
 }
 
 void initGyro(){
@@ -122,11 +106,8 @@ task track()
 {
 	while (true)
 	{
-		curXVel += getAcc(XAxis)*interval; // m/s^2 * s/1000 * unit conversion
-		curYVel += getAcc(YAxis)*interval;
-		curXPos += curXVel*interval;
-		curYPos += curYVel*interval;
-		curHeading = degreesToRadians(SensorValue(gyro)/10.);
+		curXPos += sqrt(2) * (lFrontIME.position + rBackIME.position - rFrontIME.position - lBackIME.position) / 4.0;
+		curYPos += sqrt(2) * (lFrontIME.position + lBackIME.position + rFrontIME.position+ rBackIME.position) / 4.0;
 		delay (interval*1000);
 	}
 }
@@ -156,7 +137,7 @@ void pre_auton()
 {
 	bStopTasksBetweenModes = true;
 	SensorValue(initIndicator) = 1;
-	initAcc();
+	initIME();
 	initGyro();
 	MotorSetInit (lift, liftMotors, 3);
 	SensorValue(initIndicator) = 0;
