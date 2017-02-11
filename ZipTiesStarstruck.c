@@ -7,18 +7,24 @@
 #include <CKVexMotorSet.h>
 #include <CKHolonomic.h>
 #include <ZipTiesSFCS.h>
+#include <CKVexIME.h>
 
 
 int initX, initY, initH; //Initial X, Y, Heading
+<<<<<<< HEAD
 float potVal; //Potentiometer Value for Left Arm Tower, Right Arm Tower
 float clawPotVal; //Potentiometer for the Claw
+=======
+
+IME lFrontIME, rFrontIME, lBackIME, rBackIME;
+>>>>>>> origin/master
 
 typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
 typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
 StartingColor team;
 StartingPosition side;
 
-float curXVel = 0, curYVel = 0, curXPos, curYPos, curHeading; //Current X Velociy, Y Velocity, X Position, Y Position, Heading
+float curXPos, curYPos, curHeading; //Current X Position, Y Position, Heading
 float interval = 0.075; //Interval is in SECONDS
 
 tMotor liftMotors[] = {lLiftT, rLiftT, botLift};
@@ -30,30 +36,11 @@ HolonomicBase driveTrain; //HolonomicBase of Drive Train Motors
 float startX = 35.126; //All 4 starting tiles have +- this X Coord
 float startY = 58.543; //All 4 starting tiles have +- this Y Coord
 
-typedef enum AccAxis { XAxis, YAxis }; //Axes Accelerometer Uses
-tSensors accPorts[] = {acX, acY}; //Ports Accelerometer Uses
-float accBias[] = {0, 0};
-
-//Calculate Value the Accelerometer Returns
-float getAcc(AccAxis axis)
-{
-	return SensorValue(accPorts[axis])*0.5234 - 1071.7 - accBias[axis]; //Conversion from Accelerometer Returns to in/s^2
-}
-
-//Initializes the Accelerometer by Calculating Bias
-void initAcc(){
-	curXVel = 0; //Robot starts out not moving
-	curYVel = 0;
-	float xC = 0; //Counter for bias along each axis
-	float yC = 0;
-	for (int i = 0; i < 50; i++)
-	{
-		xC += getAcc(XAxis); //Summing bias over period
-		yC += getAcc(YAxis);
-		delay(10);
-	}
-	accBias[XAxis] = xC/50.; //Average bias over initialization period
-	accBias[YAxis] = yC/50.;
+void initIME(){
+	IMEInit( lFrontIME, 3);
+	IMEInit( rFrontIME, 9);
+	IMEInit( lBackIME, 2);
+	IMEInit( rBackIME, 8);
 }
 
 void initGyro(){
@@ -64,6 +51,7 @@ void initGyro(){
 	SensorValue(gyro) = 0; //Default Gyro heading is 0
 }
 
+<<<<<<< HEAD
 //Sets arm to a position along Potentiometer
 void setArm(float pos)
 {
@@ -83,6 +71,8 @@ void setArm(float pos)
 	setPower(lift, 0);
 }
 
+=======
+>>>>>>> origin/master
 //Calculates Initial Position and Heading based on current side and team
 void initPos()
 {
@@ -100,11 +90,9 @@ task track()
 {
 	while (true)
 	{
-		curXVel += getAcc(XAxis)*interval; // m/s^2 * s/1000 * unit conversion
-		curYVel += getAcc(YAxis)*interval;
-		curXPos += curXVel*interval;
-		curYPos += curYVel*interval;
-		curHeading = degreesToRadians(SensorValue(gyro)/10.);
+		curXPos += sqrt(2) * (lFrontIME.position + rBackIME.position - rFrontIME.position - lBackIME.position) / 4.0;
+		curYPos += sqrt(2) * (lFrontIME.position + lBackIME.position + rFrontIME.position+ rBackIME.position) / 4.0;
+		curHeading = SensorValue(gyro);
 		delay (interval*1000);
 	}
 }
@@ -137,13 +125,14 @@ void pre_auton()
 	clearLCDLine(0);
 	clearLCDLine(1);
 	SensorValue(initIndicator) = 1;
-	initAcc();
+	initIME();
 	initGyro();
 	MotorSetInit (lift, liftMotors, 3);
 	SensorValue(initIndicator) = 0;
 	InitHolonomicBase(driveTrain, driveMotors, 4);
 }
 
+<<<<<<< HEAD
 task lcdManager()
 {
 	string lcdBatteryVoltages;
@@ -173,11 +162,14 @@ void redRightAuto()
 	//setClaw(2000);
 	moveToPoint(ws9, 0);
 }
+=======
+>>>>>>> origin/master
 void blueLeftAuto()
 {
 	team = blue;
 	side = pole;
 	initPos();
+<<<<<<< HEAD
 	//setClaw(2000);
 	//moveToPoint(ws9, 180);
 	motor[clawY] = 127;
@@ -214,15 +206,15 @@ void blueRightAuto()
 	initPos();
 	//setClaw(2000);
 	moveToPoint(ws2, 180);
+=======
+	moveToPoint(ws9, 180);
+>>>>>>> origin/master
 }
 
 task autonomous()
 {
 	startTask(track);
-	//redLeftAuto();
-	//redRightAuto();
 	blueLeftAuto();
-	//blueRightAuto();
 	stopTask(track);
 }
 
@@ -230,8 +222,11 @@ task usercontrol()
 {
 	while (true)
 	{
+<<<<<<< HEAD
 		startTask(lcdManager);
 		potVal = SensorValue(pot);
+=======
+>>>>>>> origin/master
 		setDriveXYR(driveTrain, vexRT[Ch4]/127., vexRT[Ch3]/127., vexRT[Ch1]/127.);
 		motor[clawY] = vexRT[Btn6UXmtr2] ? 127 : vexRT[Btn6DXmtr2] ? -127 : 0;
 		setPower(lift, vexRT[Btn5UXmtr2] ? 1 : vexRT[Btn5DXmtr2] ? -1 : 0);
