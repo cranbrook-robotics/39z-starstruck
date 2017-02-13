@@ -93,7 +93,7 @@ void initPos()
 {
 	initX = startX * ((side == pole) ? 1 : -1); //Which side of the field is the robot starting on?
 	initY = startY * ((team == blue) ? 1 : -1);
-	initH = (team == blue) ? PI : 0; //Heading is determined by which color (which direction are we facing)
+	initH = (team == blue) ? 180 : 0; //Heading is determined by which color (which direction are we facing)
 	curHeading = initH;
 	SensorValue(gyro) = initH;
 	curXPos = initX;
@@ -151,18 +151,24 @@ void setClaw(float percentage)
 //Moves robot to parameters X Coordinate, Y Coordinate, and Heading
 void moveTo(float xTar, float yTar, float hTar)
 {
-	hTar = degreesToRadians(hTar);
 	bool xArrive = false;
 	bool yArrive = false;
 	bool hArrive = false;
 	while (!xArrive || !yArrive || !hArrive){
-		setDriveXYR(driveTrain, xTar - curXPos, yTar - curYPos, hTar - curHeading);
+		setDriveXYR(driveTrain,
+			xArrive ? 0 : (xTar > curXPos ? 1 : (xTar < curXPos ? -1 : 0)),
+			yArrive ? 0 : (yTar > curYPos ? 1 : (yTar < curYPos ? -1 : 0)),
+			hArrive ? 0 : (hTar > curHeading ? -1 : (hTar < curHeading ? 1 : 0))
+		);
 		xArrive = abs(xTar - curXPos) <= 1.5;
 		yArrive = abs(yTar - curYPos) <= 1.5;
 		hArrive = abs(hTar - curHeading) <= 1.5;
 		delay(interval*1000);
 	}
+	setDriveXYR(driveTrain, 0, 0, 0);
 }
+
+
 
 void moveToPoint(coord cTar, float hTar)
 {
@@ -201,11 +207,24 @@ void blueLeftAuto()
 	side = pole;
 	initPos();
 }
+void redRightAuto()
+{
+	initX = 0; //Which side of the field is the robot starting on?
+	initY = 0;
+	initH = 0; //Heading is determined by which color (which direction are we facing)
+	curHeading = initH;
+	SensorValue(gyro) = initH;
+	curXPos = initX;
+	curYPos = initY;
+	moveTo(12, 36, 0);
+
+}
 
 task autonomous()
 {
 	startTask(track);
-	blueLeftAuto();
+	//blueLeftAuto();
+	redRightAuto();
 	stopTask(track);
 }
 
