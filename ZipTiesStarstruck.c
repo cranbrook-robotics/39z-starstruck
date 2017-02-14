@@ -154,15 +154,22 @@ void moveTo(float xTar, float yTar, float hTar)
 	bool xArrive = false;
 	bool yArrive = false;
 	bool hArrive = false;
+	float kP = 0.005;
+	float xError = xTar - curXPos;
+	float yError = yTar - curYPos;
+	float hError = curHeading - hTar;
 	while (!xArrive || !yArrive || !hArrive){
 		setDriveXYR(driveTrain,
-			xArrive ? 0 : (xTar > curXPos ? 1 : (xTar < curXPos ? -1 : 0)),
-			yArrive ? 0 : (yTar > curYPos ? 1 : (yTar < curYPos ? -1 : 0)),
-			hArrive ? 0 : (hTar > curHeading ? -1 : (hTar < curHeading ? 1 : 0))
+			xArrive ? 0 : xError * kP,
+			yArrive ? 0 : yEror * kP,
+			hArrive ? 0 : hError * kP,
 		);
-		xArrive = abs(xTar - curXPos) <= 1.5;
-		yArrive = abs(yTar - curYPos) <= 1.5;
-		hArrive = abs(hTar - curHeading) <= 1.5;
+		xError = xTar - curXPos;
+		yError = yTar - curYPos;
+		hError = curHeading - hTar;
+		xArrive = abs(xError) <= 1.5;
+		yArrive = abs(yError) <= 1.5;
+		hArrive = abs(hError) <= 5;
 		delay(interval*1000);
 	}
 	setDriveXYR(driveTrain, 0, 0, 0);
