@@ -39,7 +39,7 @@ void pre_auton()
 task main()
 {
 	pre_auton();
-	startTask(track);
+	//startTask(track);
 	while(true)
 	{
 		writeDebugStreamLine("CurHeading: %f", curHeading);
