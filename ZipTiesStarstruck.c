@@ -12,9 +12,7 @@
 
 int initX, initY, initH; //Initial X, Y, Heading
 
-IME lFrontIME, rFrontIME, lBackIME, rBackIME;
-IME baseEncoders[] = {lFrontIME, lBackIME, rFrontIME, rBackIME};
-int wheelAngles[] = {225, 315, 135, 45};
+int wheelAngles[] = {45, 135, 225, 315};
 int wheelRadius = 2;
 int potVal, clawPotVal;
 
@@ -36,47 +34,38 @@ float startX = 35.126; //All 4 starting tiles have +- this X Coord
 float startY = 58.543; //All 4 starting tiles have +- this Y Coord
 
 void initIME(){
-	IMEInit( lFrontIME, 3);
-	IMEInit( rFrontIME, 9);
-	IMEInit( lBackIME, 2);
-	IMEInit( rBackIME, 8);
+	nMotorEncoder[rBack] = 0;
+	nMotorEncoder[rFront] = 0;
+	nMotorEncoder[lFront] = 0;
+	nMotorEncoder[lBack] = 0;
 }
 
-float dxRobot()
+float* displacementRobot()
 {
-	float displacement = 0;
-	int count = 0;
+	float dispX = 0;
+	float dispY = 0;
+	int countCosine = 0;
+	int countSine = 0;
 	for (int encoder = 0; encoder < 4; encoder++)
 	{
-		float wheelDisplacement = baseEncoders[encoder].position * wheelRadius;
-		baseEncoders[encoder].position = 0;
+		float wheelDisplacement = nMotorEncoder[driveMotors[encoder]] * wheelRadius * 2 * PI / 627.2;
+		nMotorEncoder[driveMotors[encoder]] = 0;
 		float directionCosine = cos(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
+		float directionSine = sin(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
 		if (directionCosine != 0.0)
 		{
-			count++;
-			displacement += wheelDisplacement / directionCosine;
+			countCosine++;
+			dispX += wheelDisplacement / directionCosine;
 		}
-	}
-	displacement /= count;
-	return displacement;
-}
-
-float dyRobot()
-{
-	float displacement = 0;
-	int count = 0;
-	for (int encoder = 0; encoder < 4; encoder++)
-	{
-		float wheelDisplacement = baseEncoders[encoder].position * wheelRadius;
-		baseEncoders[encoder].position = 0;
-		float directionSine = sin(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
 		if (directionSine != 0.0)
 		{
-			count++;
-			displacement += wheelDisplacement / directionSine;
+			countSine++;
+			dispY += wheelDisplacement / directionCosine;
 		}
 	}
-	displacement /= count;
+	dispX /= countCosine;
+	dispY /= countSine;
+	float displacement[2] = {dispX, dispY};
 	return displacement;
 }
 
@@ -106,8 +95,9 @@ task track()
 	while (true)
 	{
 		curHeading = SensorValue(gyro);
-		curXPos += dxRobot();
-		curYPos += dyRobot();
+		float* displacement = displacementRobot();
+		curXPos += displacement[0];
+		curYPos += displacement[1];
 		delay (interval*1000);
 		potVal = SensorValue(pot);
 		clawPotVal = SensorValue(clawPot);
@@ -134,16 +124,13 @@ void setArm(float percentage)
 void setClaw(float percentage)
 {
 	int potTarget = percentage*17.4 + 1200;
-	while (abs(clawPotVal - potTarget) > 5)
+	float error = potTarget - clawPotVal;
+	bool clawArrive = false;
+	float kP = 0.05;
+	while (!clawArrive)
 	{
-		if (clawPotVal > potTarget)
-		{
-			motor[clawY] = -127;
-		}
-		else if (clawPotVal < potTarget)
-		{
-			motor[clawY] = 127;
-		}
+		motor[clawY] = error*kP;
+		clawArrive = clawPotVal - potTarget <= 5;
 	}
 	motor[clawY] = 0;
 }
@@ -154,15 +141,16 @@ void moveTo(float xTar, float yTar, float hTar)
 	bool xArrive = false;
 	bool yArrive = false;
 	bool hArrive = false;
-	float kP = 0.005;
+	float kH = 0.005;
+	float kP = 0.05;
 	float xError = xTar - curXPos;
 	float yError = yTar - curYPos;
 	float hError = curHeading - hTar;
 	while (!xArrive || !yArrive || !hArrive){
 		setDriveXYR(driveTrain,
 			xArrive ? 0 : xError * kP,
-			yArrive ? 0 : yEror * kP,
-			hArrive ? 0 : hError * kP,
+			yArrive ? 0 : yError * kP,
+			hArrive ? 0 : hError * kH,
 		);
 		xError = xTar - curXPos;
 		yError = yTar - curYPos;
