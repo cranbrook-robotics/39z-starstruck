@@ -94,13 +94,14 @@ task track()
 {
 	while (true)
 	{
-		curHeading = SensorValue(gyro);
+		curHeading = SensorValue(gyro)/10.0;
 		float* displacement = displacementRobot();
 		curXPos += displacement[0];
 		curYPos += displacement[1];
-		delay (interval*1000);
 		potVal = SensorValue(pot);
 		clawPotVal = SensorValue(clawPot);
+		delay (interval*1000);
+		
 	}
 }
 
@@ -205,15 +206,21 @@ void blueLeftAuto()
 }
 void redRightAuto()
 {
-	initX = 0; //Which side of the field is the robot starting on?
-	initY = 0;
-	initH = 0; //Heading is determined by which color (which direction are we facing)
-	curHeading = initH;
-	SensorValue(gyro) = initH;
-	curXPos = initX;
-	curYPos = initY;
-	moveTo(12, 36, 0);
-
+	team = red; //Which side of the field is the robot starting on?
+	side = pole;
+	initPos();
+}
+void blueRightAuto()
+{
+	team = blue;
+	side = noPole;
+	initPos();
+}
+void redLeftAuto()
+{
+	team = red;
+	side = pole;
+	initPos();
 }
 
 task autonomous()
