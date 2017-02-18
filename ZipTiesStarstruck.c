@@ -34,47 +34,38 @@ float startX = 35.126; //All 4 starting tiles have +- this X Coord
 float startY = 58.543; //All 4 starting tiles have +- this Y Coord
 
 void initIME(){
-	nMotorEncoder[rFront] = 0;
 	nMotorEncoder[rBack] = 0;
+	nMotorEncoder[rFront] = 0;
 	nMotorEncoder[lFront] = 0;
 	nMotorEncoder[lBack] = 0;
 }
 
-float dxRobot()
+float* displacementRobot()
 {
-	float displacement = 0;
-	int count = 0;
+	float dispX = 0;
+	float dispY = 0;
+	int countCosine = 0;
+	int countSine = 0;
 	for (int encoder = 0; encoder < 4; encoder++)
 	{
-		float wheelDisplacement = 2*PI*nMotorEncoder[driveMotors[encoder]]/627.2 * wheelRadius;
+		float wheelDisplacement = nMotorEncoder[driveMotors[encoder]] * wheelRadius * 2 * PI / 627.2;
 		nMotorEncoder[driveMotors[encoder]] = 0;
 		float directionCosine = cos(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
+		float directionSine = sin(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
 		if (directionCosine != 0.0)
 		{
-			count++;
-			displacement += wheelDisplacement / directionCosine;
+			countCosine++;
+			dispX += wheelDisplacement / directionCosine;
 		}
-	}
-	displacement /= count;
-	return displacement;
-}
-
-float dyRobot()
-{
-	float displacement = 0;
-	int count = 0;
-	for (int encoder = 0; encoder < 4; encoder++)
-	{
-		float wheelDisplacement = 2*PI*nMotorEncoder[driveMotors[encoder]]/627.2 * wheelRadius;
-		nMotorEncoder[driveMotors[encoder]] = 0;
-		float directionSine = sin(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
 		if (directionSine != 0.0)
 		{
-			count++;
-			displacement += wheelDisplacement / directionSine;
+			countSine++;
+			dispY += wheelDisplacement / directionCosine;
 		}
 	}
-	displacement /= count;
+	dispX /= countCosine;
+	dispY /= countSine;
+	float displacement[2] = {dispX, dispY};
 	return displacement;
 }
 
@@ -103,28 +94,29 @@ task track()
 {
 	while (true)
 	{
-		curHeading = SensorValue(gyro);
-		curXPos += dxRobot();
-		curYPos += dyRobot();
-		delay (interval*1000);
+		curHeading = SensorValue(gyro)/10.0;
+		float* displacement = displacementRobot();
+		curXPos += displacement[0];
+		curYPos += displacement[1];
 		potVal = SensorValue(pot);
 		clawPotVal = SensorValue(clawPot);
+		delay (interval*1000);
+
 	}
 }
 
 void setArm(float percentage)
 {
 	int potTarget = percentage*19.69 + 1579;
+	float error = potVal - potTarget;
+	bool armArrive = false;
+	float kP = 0.05;
 	while (abs(potVal - potTarget) > 5)
 	{
-		if (potVal > potTarget)
-		{
-			setPower(lift, 1);
-		}
-		else if (potVal < potTarget)
-		{
-			setPower(lift, -1);
-		}
+		setPower(lift, error*kP);
+		error = potVal - potTarget;
+		armArrive = abs(error) <= 5;
+		delay(30);
 	}
 	setPower(lift, 0);
 }
@@ -132,16 +124,15 @@ void setArm(float percentage)
 void setClaw(float percentage)
 {
 	int potTarget = percentage*17.4 + 1200;
-	while (abs(clawPotVal - potTarget) > 5)
+	float error = potTarget - clawPotVal;
+	bool clawArrive = false;
+	float kP = 0.05;
+	while (!clawArrive)
 	{
-		if (clawPotVal > potTarget)
-		{
-			motor[clawY] = -127;
-		}
-		else if (clawPotVal < potTarget)
-		{
-			motor[clawY] = 127;
-		}
+		motor[clawY] = error*kP;
+		error = potTarget - clawPotVal;
+		clawArrive = abs(error) <= 5;
+		delay(30);
 	}
 	motor[clawY] = 0;
 }
@@ -152,8 +143,8 @@ void moveTo(float xTar, float yTar, float hTar)
 	bool xArrive = false;
 	bool yArrive = false;
 	bool hArrive = false;
-	float kP = 0.05;
 	float kH = 0.005;
+	float kP = 0.05;
 	float xError = xTar - curXPos;
 	float yError = yTar - curYPos;
 	float hError = curHeading - hTar;
@@ -215,20 +206,35 @@ void blueLeftAuto()
 }
 void redRightAuto()
 {
-	setPower(lift, 1);
-	delay(1200);
-	setPower(lift, 0);
-	motor[clawY] = 127;
-	delay(400);
-	motor[clawY] = 0;
-	setDriveXYR(driveTrain, -0.6, 1, 0);
-	delay(4000);
-	setDriveXYR(driveTrain, 0, 0, -1);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, -1, 0);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, 0, 0);
+	//setPower(lift, 1);
+	//delay(1200);
+	//setPower(lift, 0);
+	//motor[clawY] = 127;
+	//delay(400);
+	//motor[clawY] = 0;
+	//setDriveXYR(driveTrain, -0.6, 1, 0);
+	//delay(4000);
+	//setDriveXYR(driveTrain, 0, 0, -1);
+	//delay(1000);
+	//setDriveXYR(driveTrain, 0, -1, 0);
+	//delay(1000);
+	//setDriveXYR(driveTrain, 0, 0, 0);
 
+	team = red; //Which side of the field is the robot starting on?
+	side = pole;
+	initPos();
+}
+void blueRightAuto()
+{
+	team = blue;
+	side = noPole;
+	initPos();
+}
+void redLeftAuto()
+{
+	team = red;
+	side = pole;
+	initPos();
 }
 
 task autonomous()
