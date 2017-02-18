@@ -6,7 +6,7 @@
 #include <CKVexIME.h>
 
 
-int initX, initY, initH; //Initial X, Y, Heading
+float initX, initY, initH; //Initial X, Y, Heading
 
 //IME lFrontIME, rFrontIME, lBackIME, rBackIME;
 //IME baseEncoders[] = {lFrontIME, lBackIME, rFrontIME, rBackIME};
@@ -31,6 +31,11 @@ HolonomicBase driveTrain; //HolonomicBase of Drive Train Motors
 
 float startX = 35.126; //All 4 starting tiles have +- this X Coord
 float startY = 58.543; //All 4 starting tiles have +- this Y Coord
+
+float robotHeading(){
+	return initH + curHeading;
+}
+
 float rBackIME1 = nMotorEncoder[rBack];
 /*void initIME(){
 	IMEInit( lFrontIME, 3);
@@ -39,42 +44,33 @@ float rBackIME1 = nMotorEncoder[rBack];
 	IMEInit( rBackIME, 8);
 }*/
 
-float dxRobot()
+void displacementRobot(float* displacement)
 {
-	float displacement = 0;
-	int count = 0;
+	float dispX = 0;
+	float dispY = 0;
+	int countCosine = 0;
+	int countSine = 0;
 	for (int encoder = 0; encoder < 4; encoder++)
 	{
-		float wheelDisplacement = 2*PI*nMotorEncoder[driveMotors[encoder]]/627.2 * wheelRadius;
+		float wheelDisplacement = nMotorEncoder[driveMotors[encoder]] * wheelRadius * 2 * PI / 627.2;
 		nMotorEncoder[driveMotors[encoder]] = 0;
-		float directionCosine = cos(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
+		float directionCosine = cos(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(robotHeading()));
+		float directionSine = sin(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(robotHeading()));
 		if (directionCosine != 0.0)
 		{
-			count++;
-			displacement += wheelDisplacement / directionCosine;
+			countCosine++;
+			dispX += wheelDisplacement / directionCosine;
 		}
-	}
-	displacement /= count;
-	return displacement;
-}
-
-float dyRobot()
-{
-	float displacement = 0;
-	int count = 0;
-	for (int encoder = 0; encoder < 4; encoder++)
-	{
-		float wheelDisplacement = 2*PI*nMotorEncoder[driveMotors[encoder]]/627.2 * wheelRadius;
-		nMotorEncoder[driveMotors[encoder]] = 0;
-		float directionSine = sin(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
 		if (directionSine != 0.0)
 		{
-			count++;
-			displacement += wheelDisplacement / directionSine;
+			countSine++;
+			dispY += wheelDisplacement / directionCosine;
 		}
 	}
-	displacement /= count;
-	return displacement;
+	dispX /= countCosine;
+	dispY /= countSine;
+	displacement[0] = dispX;
+	displacement[1] = dispY;
 }
 
 void initGyro(){
@@ -90,9 +86,10 @@ void initPos()
 {
 	initX = startX * ((side == pole) ? 1 : -1); //Which side of the field is the robot starting on?
 	initY = startY * ((team == blue) ? 1 : -1);
-	initH = (team == blue) ? 180 : 0; //Heading is determined by which color (which direction are we facing)
-	curHeading = initH;
-	SensorValue(gyro) = initH;
+	initH = (team == blue) ? 270 : 90; //Heading is determined by which color (which direction are we facing)
+	//curHeading = initH;
+	curHeading = 0;
+	//SensorValue[gyro] = initH*10.0;
 	curXPos = initX;
 	curYPos = initY;
 	nMotorEncoder[rFront] = 0;
@@ -104,14 +101,16 @@ void initPos()
 //Tracks Current Location and Heading while the track task is being run
 task track()
 {
+	float displacement[2];
 	while (true)
 	{
-		curHeading = SensorValue(gyro);
-		curXPos += dxRobot();
-		curYPos += dyRobot();
-		delay (interval*1000);
+		curHeading = SensorValue(gyro)/10.0;
+		displacementRobot(displacement);
+		curXPos += displacement[0];
+		curYPos += displacement[1];
 		potVal = SensorValue(pot);
 		clawPotVal = SensorValue(clawPot);
+		delay (interval*1000);
 	}
 }
 

@@ -10,7 +10,7 @@
 #include <CKVexIME.h>
 
 
-int initX, initY, initH; //Initial X, Y, Heading
+float initX, initY, initH; //Initial X, Y, Heading
 
 int wheelAngles[] = {45, 135, 225, 315};
 int wheelRadius = 2;
@@ -40,7 +40,11 @@ void initIME(){
 	nMotorEncoder[lBack] = 0;
 }
 
-float* displacementRobot()
+float robotHeading(){
+	return initH + curHeading;
+}
+
+void displacementRobot()
 {
 	float dispX = 0;
 	float dispY = 0;
@@ -50,8 +54,8 @@ float* displacementRobot()
 	{
 		float wheelDisplacement = nMotorEncoder[driveMotors[encoder]] * wheelRadius * 2 * PI / 627.2;
 		nMotorEncoder[driveMotors[encoder]] = 0;
-		float directionCosine = cos(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
-		float directionSine = sin(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(curHeading));
+		float directionCosine = cos(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(robotHeading()));
+		float directionSine = sin(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(robotHeading()));
 		if (directionCosine != 0.0)
 		{
 			countCosine++;
@@ -65,8 +69,8 @@ float* displacementRobot()
 	}
 	dispX /= countCosine;
 	dispY /= countSine;
-	float displacement[2] = {dispX, dispY};
-	return displacement;
+	curXPos += dispX;
+	curYPos += dispY;
 }
 
 void initGyro(){
@@ -74,7 +78,7 @@ void initGyro(){
 	wait1Msec(1000);
 	SensorType[gyro] = sensorGyro;
 	wait1Msec(2000);
-	SensorValue(gyro) = 0; //Default Gyro heading is 0
+	SensorValue[gyro] = 0; //Default Gyro heading is 0
 }
 
 //Calculates Initial Position and Heading based on current side and team
@@ -82,9 +86,8 @@ void initPos()
 {
 	initX = startX * ((side == pole) ? 1 : -1); //Which side of the field is the robot starting on?
 	initY = startY * ((team == blue) ? 1 : -1);
-	initH = (team == blue) ? 180 : 0; //Heading is determined by which color (which direction are we facing)
-	curHeading = initH;
-	SensorValue(gyro) = initH;
+	initH = (team == blue) ? 270 : 90; //Heading is determined by which color (which direction are we facing)
+	curHeading = 0.0;
 	curXPos = initX;
 	curYPos = initY;
 }
@@ -95,9 +98,7 @@ task track()
 	while (true)
 	{
 		curHeading = SensorValue(gyro)/10.0;
-		float* displacement = displacementRobot();
-		curXPos += displacement[0];
-		curYPos += displacement[1];
+		displacementRobot();
 		potVal = SensorValue(pot);
 		clawPotVal = SensorValue(clawPot);
 		delay (interval*1000);
@@ -147,7 +148,7 @@ void moveTo(float xTar, float yTar, float hTar)
 	float kP = 0.05;
 	float xError = xTar - curXPos;
 	float yError = yTar - curYPos;
-	float hError = curHeading - hTar;
+	float hError = robotHeading() - hTar;
 	while (!xArrive || !yArrive || !hArrive){
 		setDriveXYR(driveTrain,
 			xArrive ? 0 : xError * kP,
@@ -156,7 +157,7 @@ void moveTo(float xTar, float yTar, float hTar)
 		);
 		xError = xTar - curXPos;
 		yError = yTar - curYPos;
-		hError = curHeading - hTar;
+		hError = robotHeading() - hTar;
 		xArrive = abs(xError) <= 1.5;
 		yArrive = abs(yError) <= 1.5;
 		hArrive = abs(hError) <= 5;
@@ -206,23 +207,24 @@ void blueLeftAuto()
 }
 void redRightAuto()
 {
-	//setPower(lift, 1);
-	//delay(1200);
-	//setPower(lift, 0);
-	//motor[clawY] = 127;
-	//delay(400);
-	//motor[clawY] = 0;
-	//setDriveXYR(driveTrain, -0.6, 1, 0);
-	//delay(4000);
-	//setDriveXYR(driveTrain, 0, 0, -1);
-	//delay(1000);
-	//setDriveXYR(driveTrain, 0, -1, 0);
-	//delay(1000);
-	//setDriveXYR(driveTrain, 0, 0, 0);
+	setPower(lift, 1);
+	delay(1200);
+	setPower(lift, 0);
+	motor[clawY] = 127;
+	delay(400);
+	motor[clawY] = 0;
+	setDriveXYR(driveTrain, -0.6, 1, 0);
+	delay(4000);
+	setDriveXYR(driveTrain, 0, 0, -1);
+	delay(1000);
+	setDriveXYR(driveTrain, 0, -1, 0);
+	delay(1000);
+	setDriveXYR(driveTrain, 0, 0, 0);
 
-	team = red; //Which side of the field is the robot starting on?
-	side = pole;
-	initPos();
+	//team = red; //Which side of the field is the robot starting on?
+	//side = pole;
+	//initPos();
+	//moveToPoint(ws8, 90);
 }
 void blueRightAuto()
 {
@@ -241,6 +243,8 @@ task autonomous()
 {
 	startTask(track);
 	//blueLeftAuto();
+	//blueRightAuto();
+	//redLeftAuto();
 	redRightAuto();
 	stopTask(track);
 }
