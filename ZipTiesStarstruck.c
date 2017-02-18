@@ -16,6 +16,8 @@ int wheelAngles[] = {45, 135, 225, 315};
 int wheelRadius = 2;
 int potVal, clawPotVal;
 
+float clawPercentage;
+
 typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
 typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
 StartingColor team;
@@ -122,20 +124,21 @@ void setArm(float percentage)
 	setPower(lift, 0);
 }
 
-void setClaw(float percentage)
+task setClaw()
 {
-	int potTarget = percentage*17.4 + 1200;
+	int potTarget = clawPercentage*17.4 + 1200;
 	float error = potTarget - clawPotVal;
 	bool clawArrive = false;
 	float kP = 0.05;
-	while (!clawArrive)
+	while (true)
 	{
-		motor[clawY] = error*kP;
+		potTarget = clawPercentage*17.4 + 1200;
+		error = potTarget - clawPotVal;
+		motor[clawY] = clawArrive ? 0 : error*kP;
 		error = potTarget - clawPotVal;
 		clawArrive = abs(error) <= 5;
 		delay(30);
 	}
-	motor[clawY] = 0;
 }
 
 //Moves robot to parameters X Coordinate, Y Coordinate, and Heading
@@ -205,21 +208,58 @@ void blueLeftAuto()
 	side = pole;
 	initPos();
 }
-void redRightAuto()
+void redLeftAuto()
 {
 	setPower(lift, 1);
-	delay(1200);
-	setPower(lift, 0);
+	delay(950);
+	setPower(lift, 0.1);
+	//startTask(setClaw);
+	//clawPercentage = 50;
 	motor[clawY] = 127;
-	delay(400);
+	delay(500);
+	motor[clawY] = -127;
+	delay(35);
 	motor[clawY] = 0;
-	setDriveXYR(driveTrain, -0.6, 1, 0);
-	delay(4000);
+	//setClaw(50);
+	setDriveXYR(driveTrain, -0.7, 1, 0);
+	delay(3000);
+	setDriveXYR(driveTrain, 0, 0, 1);
+	delay(350);
 	setDriveXYR(driveTrain, 0, 0, -1);
 	delay(1000);
+	setDriveXYR(driveTrain, 0, 0, 1);
+	delay(500);
+	setDriveXYR(driveTrain, 0, -1, 0);
+	delay(400);
+	setDriveXYR(driveTrain, 1, 0, 0);
+	delay(750);
+	//setPower(lift, 1);
+	//delay(500);
+	//setPower(lift, 0);
+	setDriveXYR(driveTrain, 0, 1, 0);
+	delay(750);
+	setDriveXYR(driveTrain, 0, 0, -1);
+	delay(1000);
+	setDriveXYR(driveTrain, 0, 0, 1);
+	delay(1000);
+	setDriveXYR(driveTrain, 0, -1, 0);
+	delay(750);
+	setDriveXYR(driveTrain, 1, 0, 0);
+	//setPower(lift, 1);
+	//delay(500);
+	//setPower(lift, 0);
+	delay(750);
+	setDriveXYR(driveTrain, 0, 1, 0);
+	delay(800);
+	setDriveXYR(driveTrain, 0, 0, -1);
+	delay(1000);
+	setDriveXYR(driveTrain, 0, 0, 1);
+	delay(2000);
 	setDriveXYR(driveTrain, 0, -1, 0);
 	delay(1000);
 	setDriveXYR(driveTrain, 0, 0, 0);
+	setPower(lift, 0);
+
 
 	//team = red; //Which side of the field is the robot starting on?
 	//side = pole;
@@ -228,11 +268,58 @@ void redRightAuto()
 }
 void blueRightAuto()
 {
-	team = blue;
-	side = noPole;
-	initPos();
+	setPower(lift, 1);
+	delay(950);
+	setPower(lift, 0.1);
+	//startTask(setClaw);
+	//clawPercentage = 50;
+	motor[clawY] = 127;
+	delay(500);
+	motor[clawY] = -127;
+	delay(35);
+	motor[clawY] = 0;
+	//setClaw(50);
+	setDriveXYR(driveTrain, 0.4, 1, 0);
+	delay(3000);
+	setDriveXYR(driveTrain, 0, 0, -1);
+	delay(350);
+	setDriveXYR(driveTrain, 0, 0, 1);
+	delay(1000);
+	setDriveXYR(driveTrain, 0, 0, -1);
+	delay(500);
+	setDriveXYR(driveTrain, 0, -1, 0);
+	delay(400);
+	setDriveXYR(driveTrain, -1, 0, 0);
+	delay(750);
+	//setPower(lift, 1);
+	//delay(500);
+	//setPower(lift, 0);
+	setDriveXYR(driveTrain, 0, 1, 0);
+	delay(750);
+	setDriveXYR(driveTrain, 0, 0, 1);
+	delay(1000);
+	setDriveXYR(driveTrain, 0, 0, -1);
+	delay(1000);
+	setDriveXYR(driveTrain, 0, -1, 0);
+	delay(750);
+	setDriveXYR(driveTrain, -1, 0, 0);
+	//setPower(lift, 1);
+	//delay(500);
+	//setPower(lift, 0);
+	delay(750);
+	setDriveXYR(driveTrain, 0, 1, 0);
+	delay(800);
+	setDriveXYR(driveTrain, 0, 0, 1);
+	delay(1000);
+	setDriveXYR(driveTrain, 0, 0, -1);
+	delay(2000);
+	setDriveXYR(driveTrain, 0, -1, 0);
+	delay(1000);
+	setDriveXYR(driveTrain, 0, 0, 0);
+	setPower(lift, 0);
+
 }
-void redLeftAuto()
+void redRightAuto()
 {
 	team = red;
 	side = pole;
@@ -245,7 +332,7 @@ task autonomous()
 	//blueLeftAuto();
 	//blueRightAuto();
 	//redLeftAuto();
-	redRightAuto();
+	blueRightAuto();
 	stopTask(track);
 }
 
