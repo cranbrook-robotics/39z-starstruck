@@ -107,16 +107,15 @@ task track()
 void setArm(float percentage)
 {
 	int potTarget = percentage*19.69 + 1579;
+	float error = potVal - potTarget;
+	bool armArrive = false;
+	float kP = 0.05;
 	while (abs(potVal - potTarget) > 5)
 	{
-		if (potVal > potTarget)
-		{
-			setPower(lift, 1);
-		}
-		else if (potVal < potTarget)
-		{
-			setPower(lift, -1);
-		}
+		setPower(lift, error*kP);
+		error = potVal - potTarget;
+		armArrive = abs(error) <= 5;
+		delay(30);
 	}
 	setPower(lift, 0);
 }
@@ -130,7 +129,9 @@ void setClaw(float percentage)
 	while (!clawArrive)
 	{
 		motor[clawY] = error*kP;
-		clawArrive = clawPotVal - potTarget <= 5;
+		error = potTarget - clawPotVal;
+		clawArrive = abs(error) <= 5;
+		delay(30);
 	}
 	motor[clawY] = 0;
 }
