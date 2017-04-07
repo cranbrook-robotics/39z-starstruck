@@ -26,7 +26,7 @@ StartingPosition side;
 float curXPos, curYPos, curHeading; //Current X Position, Y Position, Heading
 float interval = 0.075; //Interval is in SECONDS
 
-tMotor liftMotors[] = {lLiftT, rLiftT, botLift};
+tMotor liftMotors[] = {lLiftT, rLiftT, lLiftB, rLiftB};
 MotorSet lift; //MotorSet of Right Lift Motors
 
 tMotor driveMotors[] = {rBack, rFront, lFront, lBack}; //Array of Drive Motors
@@ -124,22 +124,7 @@ void setArm(float percentage)
 	setPower(lift, 0);
 }
 
-task setClaw()
-{
-	int potTarget = clawPercentage*17.4 + 1200;
-	float error = potTarget - clawPotVal;
-	bool clawArrive = false;
-	float kP = 0.05;
-	while (true)
-	{
-		potTarget = clawPercentage*17.4 + 1200;
-		error = potTarget - clawPotVal;
-		motor[clawY] = clawArrive ? 0 : error*kP;
-		error = potTarget - clawPotVal;
-		clawArrive = abs(error) <= 5;
-		delay(30);
-	}
-}
+
 
 //Moves robot to parameters X Coordinate, Y Coordinate, and Heading
 void moveTo(float xTar, float yTar, float hTar)
@@ -185,7 +170,7 @@ void pre_auton()
 	SensorValue(initIndicator) = 1;
 	initIME();
 	initGyro();
-	MotorSetInit (lift, liftMotors, 3);
+	MotorSetInit (lift, liftMotors, 4);
 	SensorValue(initIndicator) = 0;
 	InitHolonomicBase(driveTrain, driveMotors, 4);
 }
@@ -202,129 +187,7 @@ task lcdManager()
 		delay(300);
 	}
 }
-void blueLeftAuto()
-{
-	team = blue;
-	side = pole;
-	initPos();
-}
-void redLeftAuto()
-{
-	setPower(lift, 1);
-	delay(950);
-	setPower(lift, 0.1);
-	//startTask(setClaw);
-	//clawPercentage = 50;
-	motor[clawY] = 127;
-	delay(500);
-	motor[clawY] = -127;
-	delay(35);
-	motor[clawY] = 0;
-	//setClaw(50);
-	setDriveXYR(driveTrain, -0.7, 1, 0);
-	delay(3000);
-	setDriveXYR(driveTrain, 0, 0, 1);
-	delay(350);
-	setDriveXYR(driveTrain, 0, 0, -1);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, 0, 1);
-	delay(500);
-	setDriveXYR(driveTrain, 0, -1, 0);
-	delay(400);
-	setDriveXYR(driveTrain, 1, 0, 0);
-	delay(750);
-	//setPower(lift, 1);
-	//delay(500);
-	//setPower(lift, 0);
-	setDriveXYR(driveTrain, 0, 1, 0);
-	delay(750);
-	setDriveXYR(driveTrain, 0, 0, -1);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, 0, 1);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, -1, 0);
-	delay(750);
-	setDriveXYR(driveTrain, 1, 0, 0);
-	//setPower(lift, 1);
-	//delay(500);
-	//setPower(lift, 0);
-	delay(750);
-	setDriveXYR(driveTrain, 0, 1, 0);
-	delay(800);
-	setDriveXYR(driveTrain, 0, 0, -1);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, 0, 1);
-	delay(2000);
-	setDriveXYR(driveTrain, 0, -1, 0);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, 0, 0);
-	setPower(lift, 0);
 
-
-	//team = red; //Which side of the field is the robot starting on?
-	//side = pole;
-	//initPos();
-	//moveToPoint(ws8, 90);
-}
-void blueRightAuto()
-{
-	setPower(lift, 1);
-	delay(950);
-	setPower(lift, 0.1);
-	//startTask(setClaw);
-	//clawPercentage = 50;
-	motor[clawY] = 127;
-	delay(500);
-	motor[clawY] = -127;
-	delay(35);
-	motor[clawY] = 0;
-	//setClaw(50);
-	setDriveXYR(driveTrain, 0.4, 1, 0);
-	delay(3000);
-	setDriveXYR(driveTrain, 0, 0, -1);
-	delay(350);
-	setDriveXYR(driveTrain, 0, 0, 1);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, 0, -1);
-	delay(500);
-	setDriveXYR(driveTrain, 0, -1, 0);
-	delay(400);
-	setDriveXYR(driveTrain, -1, 0, 0);
-	delay(750);
-	//setPower(lift, 1);
-	//delay(500);
-	//setPower(lift, 0);
-	setDriveXYR(driveTrain, 0, 1, 0);
-	delay(750);
-	setDriveXYR(driveTrain, 0, 0, 1);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, 0, -1);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, -1, 0);
-	delay(750);
-	setDriveXYR(driveTrain, -1, 0, 0);
-	//setPower(lift, 1);
-	//delay(500);
-	//setPower(lift, 0);
-	delay(750);
-	setDriveXYR(driveTrain, 0, 1, 0);
-	delay(800);
-	setDriveXYR(driveTrain, 0, 0, 1);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, 0, -1);
-	delay(2000);
-	setDriveXYR(driveTrain, 0, -1, 0);
-	delay(1000);
-	setDriveXYR(driveTrain, 0, 0, 0);
-	setPower(lift, 0);
-
-}
-void redRightAuto()
-{
-	team = red;
-	side = pole;
-	initPos();
-}
 
 task autonomous()
 {
@@ -332,8 +195,18 @@ task autonomous()
 	//blueLeftAuto();
 	//blueRightAuto();
 	//redLeftAuto();
-	blueRightAuto();
+	//blueRightAuto();
 	stopTask(track);
+}
+
+task clawControl()
+{
+
+	while (true)
+	{
+		SensorValue(clawSolenoid) = vexRT[Btn7D] ? 1 : vexRT[Btn7U] ? 0 : SensorValue(clawSolenoid);
+		delay(750);
+	}
 }
 
 task usercontrol()
@@ -341,8 +214,8 @@ task usercontrol()
 	while (true)
 	{
 		startTask(lcdManager);
+		startTask(clawControl);
 		setDriveXYR(driveTrain, vexRT[Ch4]/127., vexRT[Ch3]/127., vexRT[Ch1]/127.);
-		motor[clawY] = vexRT[Btn6UXmtr2] ? 127 : vexRT[Btn6DXmtr2] ? -127 : 0;
-		setPower(lift, vexRT[Btn5UXmtr2] ? 1 : vexRT[Btn5DXmtr2] ? -1 : 0);
+		setPower(lift, vexRT[Btn5U] ? 1 : vexRT[Btn5D] ? -1 : 0);
 	}
 }
