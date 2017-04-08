@@ -14,7 +14,6 @@
 float initX, initY, initH; //Initial X, Y, Heading
 
 int wheelAngles[] = {45, 135, 225, 315};
-int wheelRadius = 2;
 int potVal, clawPotVal;
 
 float clawPercentage;
@@ -24,7 +23,7 @@ typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Startin
 StartingColor team;
 StartingPosition side;
 
-float curHeading; //Current X Position, Y Position, Heading
+float  curHeading; //Current X Position, Y Position, Heading
 float interval = 0.075; //Interval is in SECONDS
 
 tMotor liftMotors[] = {lLiftT, rLiftT, lLiftB, rLiftB};
@@ -47,34 +46,6 @@ float robotHeading(){
 	return initH + curHeading;
 }
 
-void displacementRobot()
-{
-	float dispX = 0;
-	float dispY = 0;
-	int countCosine = 0;
-	int countSine = 0;
-	for (int encoder = 0; encoder < 4; encoder++)
-	{
-		float wheelDisplacement = nMotorEncoder[driveMotors[encoder]] * wheelRadius * 2 * PI / 627.2;
-		nMotorEncoder[driveMotors[encoder]] = 0;
-		float directionCosine = cos(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(robotHeading()));
-		float directionSine = sin(degreesToRadians(wheelAngles[encoder]) - degreesToRadians(robotHeading()));
-		if (directionCosine != 0.0)
-		{
-			countCosine++;
-			dispX += wheelDisplacement / directionCosine;
-		}
-		if (directionSine != 0.0)
-		{
-			countSine++;
-			dispY += wheelDisplacement / directionCosine;
-		}
-	}
-	dispX /= countCosine;
-	dispY /= countSine;
-	curXPos += dispX;
-	curYPos += dispY;
-}
 
 void initGyro(){
 	SensorType[gyro] = sensorNone; //Fixes common RobotC error with initializing Gyroscope
@@ -96,18 +67,6 @@ void initPos()
 }
 
 //Tracks Current Location and Heading while the track task is being run
-task track()
-{
-	while (true)
-	{
-		curHeading = SensorValue(gyro)/10.0;
-		displacementRobot();
-		potVal = SensorValue(pot);
-		clawPotVal = SensorValue(clawPot);
-		delay (interval*1000);
-
-	}
-}
 
 void setArm(float percentage)
 {
@@ -125,43 +84,6 @@ void setArm(float percentage)
 	setPower(lift, 0);
 }
 
-
-
-//Moves robot to parameters X Coordinate, Y Coordinate, and Heading
-void moveTo(float xTar, float yTar, float hTar)
-{
-	bool xArrive = false;
-	bool yArrive = false;
-	bool hArrive = false;
-	float kH = 0.005;
-	float kP = 0.05;
-	float xError = xTar - curXPos;
-	float yError = yTar - curYPos;
-	float hError = robotHeading() - hTar;
-	while (!xArrive || !yArrive || !hArrive){
-		setDriveXYR(driveTrain,
-			xArrive ? 0 : xError * kP,
-			yArrive ? 0 : yError * kP,
-			hArrive ? 0 : hError * kH,
-		);
-		xError = xTar - curXPos;
-		yError = yTar - curYPos;
-		hError = robotHeading() - hTar;
-		xArrive = abs(xError) <= 1.5;
-		yArrive = abs(yError) <= 1.5;
-		hArrive = abs(hError) <= 5;
-		delay(interval*1000);
-	}
-	setDriveXYR(driveTrain, 0, 0, 0);
-}
-
-
-
-void moveToPoint(coord cTar, float hTar)
-{
-	moveTo(cTar[0], cTar[1], hTar);
-}
-
 void pre_auton()
 {
 	bStopTasksBetweenModes = true;
@@ -174,6 +96,7 @@ void pre_auton()
 	MotorSetInit (lift, liftMotors, 4);
 	SensorValue(initIndicator) = 0;
 	InitHolonomicBase(driveTrain, driveMotors, 4);
+	initializeHolonomicAuto(driveMotors, wheelAngles);
 }
 
 task lcdManager()
@@ -190,14 +113,18 @@ task lcdManager()
 }
 
 
+void blueLeftAuto()
+{
+	moveToDestination(ws1[0], ws1[1]);
+	moveToObject(ws1);
+}
+
 task autonomous()
 {
-	startTask(track);
 	//blueLeftAuto();
 	//blueRightAuto();
 	//redLeftAuto();
 	//blueRightAuto();
-	stopTask(track);
 }
 
 task clawControl()

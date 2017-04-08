@@ -1,19 +1,19 @@
 #ifndef __HolonomicAuto__
 #define __HolonomicAuto__
 
-#pragma systemFile
+#include<ZipTiesSFCS.h>
 
 float wheelTargetDisp[] = {0, 0, 0, 0}; //Wheel Target Displacement
 float wheelDisp[] = {0, 0, 0, 0}; //Current Wheel Displacement
 float wheelCruisingVelocity[] = {0, 0, 0, 0}; //Wheel Cruising Velocity as calculated by Program
-float wheelHeadings[4]; // Wheel headings (will be imported)
+int importedWheelHeadings[4]; // Wheel headings (will be imported)
 tMotor importedDriveMotors[4]; // Drive Motor Array (will be imported)
 float wheelPercentDisp[] = {0, 0, 0, 0}; // Wheel percent Displacement (Current Displacement / Target Displacement)
 float wheelCurrentVelocity[] = {0, 0, 0, 0}; // Wheel Current Velocity (Calculated using PID loop as a reduction from Cruising Velocity
 float curXPos, curYPos; // Current X and Y Coordinate (as of end of last movement OR starting position)
 float tarXPos, tarYPos; // Target Location, gets input by program
 float tarHead, curHead; // Target Heading = Direction of Target Vector - curHeading: curHeading will be kept track of by Gyro, Target Vector will be calculated
-float kP;
+float kP = 0.5;
 float wheelError[] = {0, 0, 0, 0};
 
 typedef struct Vector //Struct Created to Model a Vector: Has direction and magnitude
@@ -37,7 +37,7 @@ void calcWheelTargetDisp() //Calculates target displacement for each wheel
 	tarHead = targetVector.direction - curHead;
 	for (int i = 0; i < 4; i++)
 	{
-		wheelTargetDisp[i] = targetVector.magnitude * cos(wheelHeadings[i] - tarHead);
+		wheelTargetDisp[i] = targetVector.magnitude * cos(importedWheelHeadings[i] - tarHead);
 	}
 }
 
@@ -63,7 +63,7 @@ void calcWheelCrusingVelocity() //Calculates cruising velocity for each wheel
 	}
 }
 
-void setMotors() //Sets motors to value stored in Current Velocity Array
+void setdriveMotors() //Sets motors to value stored in Current Velocity Array
 {
 	for (int i = 0; i < 4; i++)
 	{
@@ -101,7 +101,58 @@ void adjustMotor() // Uses PID Loop to Adjust Motor (slows down motors that are 
 	{
 		wheelError[i] = wheelPercentDisp[i] - smallestPercentDisp;
 		wheelCurrentVelocity[i] -= kP * wheelError;
+		if (wheelPercentDisp[i] == 1)
+		{
+			wheelCurrentVelocity[i] = 0;
+			wheelCruisingVelocity[i] = 0;
+		}
 	}
 }
 
+bool hasArrived()
+{
+	return wheelPercentDisp[0] == 1 && wheelPercentDisp[1] == 1 && wheelPercentDisp[2] == 1 && wheelPercentDisp[3];
+}
+
+void initializeHolonomicAuto(tMotor* motors, int* wheelHeadings)
+{
+	importedDriveMotors = motors;
+	importedWheelHeadings = wheelHeadings;
+}
+
+void setDestination(float xCoord, float yCoord)
+{
+	tarXPos = xCoord;
+	tarYPos = yCoord;
+}
+
+void driveCalculations()
+{
+	calcTarVector();
+	calcWheelTargetDisp();
+	convertInchesToTicks();
+	calcWheelCrusingVelocity();
+}
+void runDrive()
+{
+	while(!hasArrived())
+	{
+		setdriveMotors();
+		calcWheelDisp();
+		calcPercentDisp();
+		adjustMotor();
+	}
+}
+
+void moveToDestination(float xTarget, float yTarget)
+{
+	setDestination(xTarget, yTarget);
+	driveCalculations();
+	runDrive();
+}
+
+void moveToObject(coord Object)
+{
+	moveToDestination(Object[0], Object[1]);
+}
 #endif
