@@ -8,6 +8,7 @@
 #include <CKHolonomic.h>
 #include <ZipTiesSFCS.h>
 #include <CKVexIME.h>
+#include <HolonomicAuto.h>
 
 
 float initX, initY, initH; //Initial X, Y, Heading
@@ -23,7 +24,7 @@ typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Startin
 StartingColor team;
 StartingPosition side;
 
-float curXPos, curYPos, curHeading; //Current X Position, Y Position, Heading
+float curHeading; //Current X Position, Y Position, Heading
 float interval = 0.075; //Interval is in SECONDS
 
 tMotor liftMotors[] = {lLiftT, rLiftT, lLiftB, rLiftB};

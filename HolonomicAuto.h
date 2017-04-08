@@ -1,8 +1,13 @@
+#ifndef __HolonomicAuto__
+#define __HolonomicAuto__
+
+#pragma systemFile
+
 float wheelTargetDisp[] = {0, 0, 0, 0}; //Wheel Target Displacement
 float wheelDisp[] = {0, 0, 0, 0}; //Current Wheel Displacement
 float wheelCruisingVelocity[] = {0, 0, 0, 0}; //Wheel Cruising Velocity as calculated by Program
 float wheelHeadings[4]; // Wheel headings (will be imported)
-tMotor driveMotors[4]; // Drive Motor Array (will be imported)
+tMotor importedDriveMotors[4]; // Drive Motor Array (will be imported)
 float wheelPercentDisp[] = {0, 0, 0, 0}; // Wheel percent Displacement (Current Displacement / Target Displacement)
 float wheelCurrentVelocity[] = {0, 0, 0, 0}; // Wheel Current Velocity (Calculated using PID loop as a reduction from Cruising Velocity
 float curXPos, curYPos; // Current X and Y Coordinate (as of end of last movement OR starting position)
@@ -62,7 +67,7 @@ void setMotors() //Sets motors to value stored in Current Velocity Array
 {
 	for (int i = 0; i < 4; i++)
 	{
-		driveMotors[i] = wheelCurrentVelocity[i];
+		importedDriveMotors[i] = wheelCurrentVelocity[i];
 	}
 }
 
@@ -70,8 +75,8 @@ void calcWheelDisp() //Calculates wheel's displacement
 {
 	for (int i = 0; i < 4; i++)
 	{
-		wheelDisp[i] += nMotorEncoder[driveMotors[i]];
-		nMotorEncoder[driveMotors[i]] = 0;
+		wheelDisp[i] += nMotorEncoder[importedDriveMotors[i]];
+		nMotorEncoder[importedDriveMotors[i]] = 0;
 	}
 }
 
@@ -99,9 +104,4 @@ void adjustMotor() // Uses PID Loop to Adjust Motor (slows down motors that are 
 	}
 }
 
-task main()
-{
-
-
-
-}
+#endif
