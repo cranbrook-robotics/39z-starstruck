@@ -3,11 +3,11 @@
 #include <CKVexMotorSet.h>
 task main()
 {
-float potVal = SensorValue(clawPot);
+float potVal = SensorValue(autoSelection);
 clearDebugStream();
 while(true)
 {
-	potVal = SensorValue(clawPot);
+	potVal = SensorValue(autoSelection);
 
 	writeDebugStreamLine("Pot: %f", potVal);
 	delay(500);

@@ -20,16 +20,16 @@ typedef struct Vector //Struct Created to Model a Vector: Has direction and magn
 {
 	float direction;
 	float magnitude;
-}
+} Vector;
 
 struct Vector targetVector;
 
 void calcTarVector() //Calculates the Target Drive Vector
 {
-		float tarYDisp = tarYPos - curYPos;
-		float tarXDisp = tarXPos - curXPos;
-		targetVector.direction = atan2(tarYDisp, tarXDisp);
-		targetVector.magnitude = sqrt(tarYDisp * tarYDisp + tarXDisp * tarXDisp);
+	float tarYDisp = tarYPos - curYPos;
+	float tarXDisp = tarXPos - curXPos;
+	targetVector.direction = atan2(tarYDisp, tarXDisp);
+	targetVector.magnitude = sqrt(tarYDisp * tarYDisp + tarXDisp * tarXDisp);
 }
 
 void calcWheelTargetDisp() //Calculates target displacement for each wheel
@@ -67,7 +67,7 @@ void setdriveMotors() //Sets motors to value stored in Current Velocity Array
 {
 	for (int i = 0; i < 4; i++)
 	{
-		importedDriveMotors[i] = wheelCurrentVelocity[i];
+		motor[importedDriveMotors[i]] = wheelCurrentVelocity[i];
 	}
 }
 
@@ -116,8 +116,11 @@ bool hasArrived()
 
 void initializeHolonomicAuto(tMotor* motors, int* wheelHeadings)
 {
-	importedDriveMotors = motors;
-	importedWheelHeadings = wheelHeadings;
+	for (int i = 0; i < 4; i++)
+	{
+		importedDriveMotors[i] = motors[i];
+		importedWheelHeadings[i] = wheelHeadings[i];
+	}
 }
 
 void setDestination(float xCoord, float yCoord)

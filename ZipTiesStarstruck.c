@@ -14,12 +14,10 @@
 float initX, initY, initH; //Initial X, Y, Heading
 
 int wheelAngles[] = {45, 135, 225, 315};
-int potVal, clawPotVal;
-
-float clawPercentage;
+int leftPotVal, rightPotVal;
 
 typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
-typedef enum StartingPosition {pole, noPole}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
+typedef enum StartingPosition {pole, driver}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
 StartingColor team;
 StartingPosition side;
 
@@ -61,28 +59,11 @@ void initPos()
 	initX = startX * ((side == pole) ? 1 : -1); //Which side of the field is the robot starting on?
 	initY = startY * ((team == blue) ? 1 : -1);
 	initH = (team == blue) ? 270 : 90; //Heading is determined by which color (which direction are we facing)
-	curHeading = 0.0;
+	curHeading = initH;
 	curXPos = initX;
 	curYPos = initY;
 }
 
-//Tracks Current Location and Heading while the track task is being run
-
-void setArm(float percentage)
-{
-	int potTarget = percentage*19.69 + 1579;
-	float error = potVal - potTarget;
-	bool armArrive = false;
-	float kP = 0.05;
-	while (abs(potVal - potTarget) > 5)
-	{
-		setPower(lift, error*kP);
-		error = potVal - potTarget;
-		armArrive = abs(error) <= 5;
-		delay(30);
-	}
-	setPower(lift, 0);
-}
 
 void pre_auton()
 {
@@ -90,13 +71,12 @@ void pre_auton()
 	bLCDBacklight = true;
 	clearLCDLine(0);
 	clearLCDLine(1);
-	SensorValue(initIndicator) = 1;
 	initIME();
 	initGyro();
 	MotorSetInit (lift, liftMotors, 4);
-	SensorValue(initIndicator) = 0;
 	InitHolonomicBase(driveTrain, driveMotors, 4);
 	initializeHolonomicAuto(driveMotors, wheelAngles);
+	displayLCDString(0,0,"INITIALIZING");
 }
 
 task lcdManager()
@@ -104,7 +84,7 @@ task lcdManager()
 	string lcdBatteryVoltages;
 	while(true)
 	{
-		sprintf(lcdBatteryVoltages, "M: %.2f P: %.2f", MainBatteryVoltage(), powerExpanderVoltage(pPowerExp));
+		sprintf(lcdBatteryVoltages, "M: %.2f P: %.2f", MainBatteryVoltage(), SensorValue(pPowerExp)/182.4);
 		clearLCDLine(0);
 		clearLCDLine(1);
 		displayLCDString(0,0,lcdBatteryVoltages);
@@ -113,18 +93,43 @@ task lcdManager()
 }
 
 
-void blueLeftAuto()
+void bluePoleAuto()
 {
+	team = blue;
+	side = pole;
+	initPos();
 	moveToDestination(ws1[0], ws1[1]);
 	moveToObject(ws1);
+}
+void blueDriverAuto()
+{
+	team = blue;
+	side = driver;
+	initPos();
+}
+void redPoleAuto()
+{
+	team = red;
+	side = pole;
+	initPos();
+}
+void redDriverAuto()
+{
+	team = red;
+	side = driver;
+	initPos();
 }
 
 task autonomous()
 {
-	//blueLeftAuto();
-	//blueRightAuto();
-	//redLeftAuto();
-	//blueRightAuto();
+	if(SensorValue(autoSelection) <= 150)
+		blueDriverAuto();
+	else if (SensorValue(autoSelection) > 150 && SensorValue(autoSelection) <= 1650)
+		bluePoleAuto();
+	else if (SensorValue(autoSelection) > 1650 && SensorValue(autoSelection) <= 3250)
+		redPoleAuto();
+	else if (SensorValue(autoSelection) > 3250)
+		redDriverAuto();
 }
 
 task clawControl()
