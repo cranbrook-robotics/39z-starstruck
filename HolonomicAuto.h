@@ -12,9 +12,41 @@ float wheelPercentDisp[] = {0, 0, 0, 0}; // Wheel percent Displacement (Current 
 float wheelCurrentVelocity[] = {0, 0, 0, 0}; // Wheel Current Velocity (Calculated using PID loop as a reduction from Cruising Velocity
 float curXPos, curYPos; // Current X and Y Coordinate (as of end of last movement OR starting position)
 float tarXPos, tarYPos; // Target Location, gets input by program
-float tarHead, curHead; // Target Heading = Direction of Target Vector - curHeading: curHeading will be kept track of by Gyro, Target Vector will be calculated
+float tarHead; // Target Heading = Direction of Target Vector - robotHeading()
 float kP = 0.5;
 float wheelError[] = {0, 0, 0, 0};
+float startX = 35.126; //All 4 starting tiles have +- this X Coord
+float startY = 58.543; //All 4 starting tiles have +- this Y Coord
+float initX, initY, initH; //Initial X, Y, Heading
+typedef enum StartingColor {red, blue}; //Color of the Starting Tile (red or blue)
+typedef enum StartingPosition {pole, driver}; //Side of the Field of the Starting Tile (near the pole or away from the pole)
+StartingColor team;
+StartingPosition side;
+float  curHeading; //Current X Position, Y Position, Heading
+
+float robotHeading(){
+	return initH + curHeading;
+}
+
+void initGyro(){
+	SensorType[gyro] = sensorNone; //Fixes common RobotC error with initializing Gyroscope
+	wait1Msec(1000);
+	SensorType[gyro] = sensorGyro;
+	wait1Msec(2000);
+	SensorValue[gyro] = 0; //Default Gyro heading is 0
+}
+
+//Calculates Initial Position and Heading based on current side and team
+void initPos()
+{
+	initX = startX * ((side == pole) ? 1 : -1); //Which side of the field is the robot starting on?
+	initY = startY * ((team == blue) ? 1 : -1);
+	initH = (team == blue) ? 270 : 90; //Heading is determined by which color (which direction are we facing)
+	curHeading = initH;
+	curXPos = initX;
+	curYPos = initY;
+}
+
 
 typedef struct Vector //Struct Created to Model a Vector: Has direction and magnitude
 {
@@ -34,7 +66,7 @@ void calcTarVector() //Calculates the Target Drive Vector
 
 void calcWheelTargetDisp() //Calculates target displacement for each wheel
 {
-	tarHead = targetVector.direction - curHead;
+	tarHead = targetVector.direction - robotHeading();
 	for (int i = 0; i < 4; i++)
 	{
 		wheelTargetDisp[i] = targetVector.magnitude * cos(importedWheelHeadings[i] - tarHead);
@@ -45,7 +77,7 @@ void convertInchesToTicks() //Calculates target displacement in in ticks for eac
 {
 	for (int i = 0; i < 4; i++)
 	{
-		wheelTargetDisp[i] = wheelTargetDisp[i] * 392 / 4 / PI;
+		wheelTargetDisp[i] = wheelTargetDisp[i] * 627.2 / 4 / PI;
 	}
 }
 
@@ -101,7 +133,7 @@ void adjustMotor() // Uses PID Loop to Adjust Motor (slows down motors that are 
 	{
 		wheelError[i] = wheelPercentDisp[i] - smallestPercentDisp;
 		wheelCurrentVelocity[i] -= kP * wheelError;
-		if (wheelPercentDisp[i] == 1)
+		if (wheelPercentDisp[i] >= 1)//NOTE: can displacement exceed 1?
 		{
 			wheelCurrentVelocity[i] = 0;
 			wheelCruisingVelocity[i] = 0;
@@ -111,8 +143,8 @@ void adjustMotor() // Uses PID Loop to Adjust Motor (slows down motors that are 
 
 bool hasArrived()
 {
-	return wheelPercentDisp[0] == 1 && wheelPercentDisp[1] == 1 && wheelPercentDisp[2] == 1 && wheelPercentDisp[3];
-}
+	return wheelPercentDisp[0] >= 1 && wheelPercentDisp[1] >= 1 && wheelPercentDisp[2] >= 1 && wheelPercentDisp[3];// (== 1?)
+}//NOTE: same as above - can disp > 1?
 
 void initializeHolonomicAuto(tMotor* motors, int* wheelHeadings)
 {
