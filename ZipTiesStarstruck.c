@@ -111,7 +111,7 @@ task clawControl()
 
 	while (true)
 	{
-		SensorValue(clawSolenoid) = vexRT[Btn7DXmtr2] ? 1 : vexRT[Btn7UXmtr2] ? 0 : SensorValue(clawSolenoid);
+		SensorValue(clawSolenoid) = vexRT[Btn7D] ? 1 : vexRT[Btn7U] ? 0 : SensorValue(clawSolenoid);
 		delay(750);
 	}
 }
@@ -123,6 +123,6 @@ task usercontrol()
 		startTask(lcdManager);
 		startTask(clawControl);
 		setDriveXYR(driveTrain, vexRT[Ch4]/127., vexRT[Ch3]/127., vexRT[Ch1]/127.);
-		setPower(lift, vexRT[Btn5UXmtr2] ? 1 : vexRT[Btn5DXmtr2] ? -1 : 0);
+		setPower(lift, vexRT[Btn5U] ? 1 : vexRT[Btn5D] ? -1 : 0);
 	}
 }
